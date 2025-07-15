@@ -6,3 +6,7 @@ backend/build-errors.log
 
 # Development
 *.log
+
+# Environment variables
+.env
+backend/.env

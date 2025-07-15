@@ -10,12 +10,24 @@ Go + Echo を使用したバックエンドAPI
 
 ### セットアップ
 
-1. 依存関係のインストール
+1. 環境変数の設定
+```bash
+# .env.exampleをコピーして.envファイルを作成
+cp .env.example .env
+
+# .envファイルを編集して必要な値を設定
+# 特に以下の設定は必須：
+# GOOGLE_CLIENT_ID=your_actual_google_client_id
+# GOOGLE_CLIENT_SECRET=your_actual_google_client_secret
+# JWT_SECRET=your_actual_jwt_secret_key
+```
+
+2. 依存関係のインストール
 ```bash
 go mod download
 ```
 
-2. Air のインストール (初回のみ)
+3. Air のインストール (初回のみ)
 ```bash
 go install github.com/air-verse/air@latest
 ```
