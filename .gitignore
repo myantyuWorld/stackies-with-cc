@@ -1,1 +1,8 @@
 vendor/
+
+# Air hot reload
+backend/tmp/
+backend/build-errors.log
+
+# Development
+*.log
