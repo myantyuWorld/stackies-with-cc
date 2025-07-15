@@ -50,8 +50,8 @@ jobs:
     - name: Run go fmt check
       run: |
         cd backend
-        if [ "$(gofmt -s -l . | wc -l)" -gt 0 ]; then
+        if [ "$(gofmt -s -l . | grep -v vendor | wc -l)" -gt 0 ]; then
           echo "Code is not formatted properly"
-          gofmt -s -l .
+          gofmt -s -l . | grep -v vendor
           exit 1
         fi
