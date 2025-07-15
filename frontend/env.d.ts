@@ -12,22 +12,32 @@ interface ImportMeta {
   readonly env: ImportMetaEnv
 }
 
+// Google OAuth関連の型定義
+interface GoogleOAuthResponse {
+  code?: string
+  error?: string
+  error_description?: string
+  state?: string
+}
+
+interface GoogleIdentityServices {
+  accounts: {
+    oauth2: {
+      initCodeClient: (config: {
+        client_id: string
+        scope: string
+        callback: (response: GoogleOAuthResponse) => void
+        ux_mode: string
+      }) => {
+        requestCode: () => void
+      }
+      hasGrantedAllScopes: (token: string, scopes: string) => boolean
+    }
+  }
+}
+
 declare global {
   interface Window {
-    google: {
-      accounts: {
-        oauth2: {
-          initCodeClient: (config: {
-            client_id: string
-            scope: string
-            callback: (response: any) => void
-            ux_mode: string
-          }) => {
-            requestCode: () => void
-          }
-          hasGrantedAllScopes: (token: any, scopes: string) => boolean
-        }
-      }
-    }
+    google: GoogleIdentityServices
   }
 }

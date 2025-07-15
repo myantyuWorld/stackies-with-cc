@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import type { User, AuthState, LoginRequest, LoginResponse, RefreshTokenRequest } from '../types'
+import type { User, AuthState, LoginRequest, LoginResponse, RefreshTokenRequest, GoogleOAuthResponse, GoogleOAuthError, GoogleOAuthSuccess } from '../types'
 
 describe('Auth Types', () => {
   describe('User Type', () => {
@@ -97,6 +97,56 @@ describe('Auth Types', () => {
       }
 
       expect(refreshRequest.refreshToken).toBe('refresh-token')
+    })
+  })
+
+  describe('GoogleOAuthResponse Type', () => {
+    it('should handle successful OAuth response', () => {
+      const successResponse: GoogleOAuthResponse = {
+        code: 'test-auth-code',
+        state: 'test-state'
+      }
+
+      expect(successResponse.code).toBe('test-auth-code')
+      expect(successResponse.state).toBe('test-state')
+    })
+
+    it('should handle OAuth error response', () => {
+      const errorResponse: GoogleOAuthResponse = {
+        error: 'access_denied',
+        error_description: 'User denied access',
+        state: 'test-state'
+      }
+
+      expect(errorResponse.error).toBe('access_denied')
+      expect(errorResponse.error_description).toBe('User denied access')
+      expect(errorResponse.state).toBe('test-state')
+    })
+  })
+
+  describe('GoogleOAuthError Type', () => {
+    it('should have correct error properties', () => {
+      const oauthError: GoogleOAuthError = {
+        error: 'invalid_request',
+        error_description: 'Invalid request parameters',
+        state: 'test-state'
+      }
+
+      expect(oauthError.error).toBe('invalid_request')
+      expect(oauthError.error_description).toBe('Invalid request parameters')
+      expect(oauthError.state).toBe('test-state')
+    })
+  })
+
+  describe('GoogleOAuthSuccess Type', () => {
+    it('should have correct success properties', () => {
+      const oauthSuccess: GoogleOAuthSuccess = {
+        code: 'test-auth-code',
+        state: 'test-state'
+      }
+
+      expect(oauthSuccess.code).toBe('test-auth-code')
+      expect(oauthSuccess.state).toBe('test-state')
     })
   })
 })

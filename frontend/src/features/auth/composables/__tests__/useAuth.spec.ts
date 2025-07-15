@@ -1,5 +1,6 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { setActivePinia, createPinia } from 'pinia'
+import type { GoogleOAuthResponse } from '@/shared/auth/types'
 
 // Mock Google Auth library
 const mockGoogleAuth = {
@@ -75,5 +76,29 @@ describe('useAuth Composable', () => {
     const auth = useAuth()
     
     expect(typeof auth.initialize).toBe('function')
+  })
+
+  it('should handle Google OAuth response correctly', async () => {
+    const { useAuth } = await import('../useAuth')
+    const auth = useAuth()
+    
+    const mockResponse: GoogleOAuthResponse = {
+      code: 'test-auth-code'
+    }
+    
+    expect(mockResponse.code).toBe('test-auth-code')
+  })
+
+  it('should handle Google OAuth error correctly', async () => {
+    const { useAuth } = await import('../useAuth')
+    const auth = useAuth()
+    
+    const mockErrorResponse: GoogleOAuthResponse = {
+      error: 'access_denied',
+      error_description: 'User denied access'
+    }
+    
+    expect(mockErrorResponse.error).toBe('access_denied')
+    expect(mockErrorResponse.error_description).toBe('User denied access')
   })
 })

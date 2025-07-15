@@ -72,6 +72,7 @@ export const useAuthStore = defineStore('auth', () => {
           accessToken.value = storedAccessToken
           refreshToken.value = storedRefreshToken
         } catch (err) {
+          console.error('Error initializing auth:', err)
           // Invalid token, clear localStorage
           localStorage.removeItem(AUTH_CONSTANTS.STORAGE_KEYS.ACCESS_TOKEN)
           localStorage.removeItem(AUTH_CONSTANTS.STORAGE_KEYS.REFRESH_TOKEN)
