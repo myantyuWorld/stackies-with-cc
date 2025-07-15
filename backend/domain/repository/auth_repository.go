@@ -10,4 +10,5 @@ type AuthRepository interface {
 	SaveToken(ctx context.Context, userID string, token *model.AuthToken) error
 	GetToken(ctx context.Context, userID string) (*model.AuthToken, error)
 	DeleteToken(ctx context.Context, userID string) error
+	ValidateToken(ctx context.Context, token string) (string, error)
 }

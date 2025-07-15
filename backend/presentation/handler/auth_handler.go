@@ -3,6 +3,7 @@ package handler
 import (
 	"net/http"
 	"stackies-backend/domain/model"
+	"stackies-backend/domain/repository"
 	"stackies-backend/usecase"
 
 	"github.com/labstack/echo/v4"
@@ -11,12 +12,14 @@ import (
 // AuthHandler は認証関連のHTTPハンドラーを表す
 type AuthHandler struct {
 	authUsecase usecase.AuthUsecase
+	userRepo    repository.UserRepository
 }
 
 // NewAuthHandler はAuthHandlerの新しいインスタンスを作成する
-func NewAuthHandler(authUsecase usecase.AuthUsecase) *AuthHandler {
+func NewAuthHandler(authUsecase usecase.AuthUsecase, userRepo repository.UserRepository) *AuthHandler {
 	return &AuthHandler{
 		authUsecase: authUsecase,
+		userRepo:    userRepo,
 	}
 }
 
@@ -113,4 +116,19 @@ func (h *AuthHandler) Logout(c echo.Context) error {
 	}
 
 	return c.JSON(http.StatusOK, map[string]string{"message": "Logged out successfully"})
+}
+
+// GetMe は現在認証されているユーザーの情報を取得するハンドラーメソッドを表す
+func (h *AuthHandler) GetMe(c echo.Context) error {
+	userID := c.Get("user_id").(string)
+
+	user, err := h.userRepo.FindByID(c.Request().Context(), userID)
+	if err != nil {
+		if err == repository.ErrUserNotFound {
+			return echo.NewHTTPError(http.StatusNotFound, "User not found")
+		}
+		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
+	}
+
+	return c.JSON(http.StatusOK, user)
 }
