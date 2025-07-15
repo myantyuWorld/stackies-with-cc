@@ -2,49 +2,78 @@ package external
 
 import (
 	"context"
+	"encoding/json"
+	"fmt"
+	"net/http"
 	"stackies-backend/domain/model"
 	"stackies-backend/domain/service"
+
+	"golang.org/x/oauth2"
+	"golang.org/x/oauth2/google"
 )
 
 // GoogleServiceImpl はGoogleService interfaceの実装
 type GoogleServiceImpl struct {
-	// 実際のGoogle OAuth2.0ライブラリとの統合ポイント
-	clientID     string
-	clientSecret string
+	config *oauth2.Config
 }
 
 // NewGoogleService は新しいGoogleServiceを作成する
 func NewGoogleService(clientID, clientSecret string) service.GoogleService {
+	config := &oauth2.Config{
+		ClientID:     clientID,
+		ClientSecret: clientSecret,
+		RedirectURL:  "http://localhost:8080/auth/google/callback",
+		Scopes: []string{
+			"https://www.googleapis.com/auth/userinfo.email",
+			"https://www.googleapis.com/auth/userinfo.profile",
+		},
+		Endpoint: google.Endpoint,
+	}
+
 	return &GoogleServiceImpl{
-		clientID:     clientID,
-		clientSecret: clientSecret,
+		config: config,
 	}
 }
 
 // ExchangeCode は認証コードをアクセストークンに交換する
 func (g *GoogleServiceImpl) ExchangeCode(ctx context.Context, code, redirectURI string) (*model.AuthToken, error) {
-	// TODO: 実際のGoogle OAuth2.0 APIとの統合実装
-	// ここでは仮の実装
+	token, err := g.config.Exchange(ctx, code)
+	if err != nil {
+		return nil, fmt.Errorf("failed to exchange code: %w", err)
+	}
+
 	return &model.AuthToken{
-		AccessToken:  "mock_access_token",
-		RefreshToken: "mock_refresh_token",
-		ExpiresIn:    3600,
-		TokenType:    "Bearer",
+		AccessToken:  token.AccessToken,
+		RefreshToken: token.RefreshToken,
+		ExpiresIn:    int(token.Expiry.Unix()),
+		TokenType:    token.TokenType,
 	}, nil
 }
 
 // GetUserInfo はアクセストークンを使用してユーザー情報を取得する
 func (g *GoogleServiceImpl) GetUserInfo(ctx context.Context, accessToken string) (*model.GoogleUserInfo, error) {
-	// TODO: 実際のGoogle User Info APIとの統合実装
-	// ここでは仮の実装
-	return &model.GoogleUserInfo{
-		ID:            "mock_google_user_id",
-		Email:         "mock@example.com",
-		VerifiedEmail: true,
-		Name:          "Mock User",
-		GivenName:     "Mock",
-		FamilyName:    "User",
-		Picture:       "https://example.com/picture.jpg",
-		Locale:        "ja",
-	}, nil
+	client := &http.Client{}
+	req, err := http.NewRequestWithContext(ctx, "GET", "https://www.googleapis.com/oauth2/v2/userinfo", nil)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create request: %w", err)
+	}
+
+	req.Header.Set("Authorization", "Bearer "+accessToken)
+
+	resp, err := client.Do(req)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get user info: %w", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("google API returned status %d", resp.StatusCode)
+	}
+
+	var userInfo model.GoogleUserInfo
+	if err := json.NewDecoder(resp.Body).Decode(&userInfo); err != nil {
+		return nil, fmt.Errorf("failed to decode user info: %w", err)
+	}
+
+	return &userInfo, nil
 }

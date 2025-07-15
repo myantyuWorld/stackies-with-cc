@@ -51,10 +51,10 @@ type (
 
 // AuthUsecaseImpl はAuthUsecaseの実装
 type AuthUsecaseImpl struct {
-	userRepo    repository.UserRepository
-	authRepo    repository.AuthRepository
-	googleSvc   service.GoogleService
-	jwtSvc      service.JWTService
+	userRepo  repository.UserRepository
+	authRepo  repository.AuthRepository
+	googleSvc service.GoogleService
+	jwtSvc    service.JWTService
 }
 
 // NewAuthUsecase は新しいAuthUsecaseを作成する
