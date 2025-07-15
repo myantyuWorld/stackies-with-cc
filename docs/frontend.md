@@ -15,7 +15,7 @@
       <description>APIクライアントの初期化を行う。APIエラー型や、openapi.ymlから生成されたTSファイルなどを配置する</description>
     </component>
     <component name="auth">
-      <description>Firebaseを使用した認証処理やログイン状態の監視を行う処理を実装</description>
+      <description>Google OAuth2.0 + JWT認証処理やログイン状態の監視を行う処理を実装</description>
     </component>
     <component name="constants">
       <description>アプリケーション全体で使用する色や各種定数を実装</description>
