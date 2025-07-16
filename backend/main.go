@@ -26,6 +26,13 @@ func main() {
 	e.Use(middleware.Logger())
 	e.Use(middleware.Recover())
 
+	// CORS設定を追加
+	e.Use(middleware.CORSWithConfig(middleware.CORSConfig{
+		AllowOrigins: []string{"http://localhost:3000", "http://localhost:5173"},
+		AllowMethods: []string{http.MethodGet, http.MethodPost, http.MethodPut, http.MethodDelete, http.MethodOptions},
+		AllowHeaders: []string{echo.HeaderOrigin, echo.HeaderContentType, echo.HeaderAccept, echo.HeaderAuthorization},
+	}))
+
 	container := registry.NewContainer()
 	userRepo := persistence.NewUserRepository()
 	authRepo := persistence.NewAuthRepository()
@@ -36,10 +43,11 @@ func main() {
 	container.SetGoogleService(googleSvc)
 	container.SetJWTService(jwtSvc)
 
-	authHandler := handler.NewAuthHandler(authUsecase, userRepo)
+	authHandler := handler.NewAuthHandler(authUsecase, userRepo, googleSvc)
 
 	e.GET("/health", healthCheck)
-	e.POST("/auth/google/login", authHandler.GoogleLogin)
+	e.GET("/auth/google/url", authHandler.GoogleAuthURL)
+	e.GET("/auth/google/login", authHandler.GoogleLogin)
 	e.POST("/auth/refresh", authHandler.RefreshToken)
 	e.POST("/auth/logout", authHandler.Logout)
 	e.GET("/auth/me", authHandler.GetMe)

@@ -1,11 +1,16 @@
 package handler
 
 import (
+	"crypto/rand"
+	"encoding/hex"
+	"fmt"
 	"net/http"
 	"stackies-backend/domain/model"
 	"stackies-backend/domain/repository"
+	"stackies-backend/domain/service"
 	"stackies-backend/usecase"
 
+	"github.com/davecgh/go-spew/spew"
 	"github.com/labstack/echo/v4"
 )
 
@@ -13,21 +18,31 @@ import (
 type AuthHandler struct {
 	authUsecase usecase.AuthUsecase
 	userRepo    repository.UserRepository
+	googleSvc   service.GoogleService
+	stateStore  map[string]bool // 本来はRedisなどを使用
 }
 
 // NewAuthHandler はAuthHandlerの新しいインスタンスを作成する
-func NewAuthHandler(authUsecase usecase.AuthUsecase, userRepo repository.UserRepository) *AuthHandler {
+func NewAuthHandler(authUsecase usecase.AuthUsecase, userRepo repository.UserRepository, googleSvc service.GoogleService) *AuthHandler {
 	return &AuthHandler{
 		authUsecase: authUsecase,
 		userRepo:    userRepo,
+		googleSvc:   googleSvc,
+		stateStore:  make(map[string]bool),
 	}
 }
 
 type (
+	// GoogleAuthURLResponse はGoogle認証URL生成のレスポンス構造体を表す
+	GoogleAuthURLResponse struct {
+		AuthURL string `json:"auth_url"`
+		State   string `json:"state"`
+	}
+
 	// GoogleLoginRequest はGoogleログインのリクエスト構造体を表す
 	GoogleLoginRequest struct {
-		AuthorizationCode string `json:"authorization_code" validate:"required"`
-		RedirectURI       string `json:"redirect_uri" validate:"required"`
+		State string `json:"state" query:"state" validate:"required"`
+		Code  string `json:"code" query:"code" validate:"required"`
 	}
 
 	// GoogleLoginResponse はGoogleログインのレスポンス構造体を表す
@@ -51,6 +66,44 @@ type (
 	}
 )
 
+// generateState はCSRF対策用のランダムなstateを生成する
+func (h *AuthHandler) generateState() (string, error) {
+	bytes := make([]byte, 16)
+	if _, err := rand.Read(bytes); err != nil {
+		return "", err
+	}
+	state := hex.EncodeToString(bytes)
+	h.stateStore[state] = true
+	return state, nil
+}
+
+// validateState はstateの有効性を検証する
+func (h *AuthHandler) validateState(state string) bool {
+	if _, exists := h.stateStore[state]; exists {
+		delete(h.stateStore, state) // 一度使用したら削除
+		return true
+	}
+	return false
+}
+
+// GoogleAuthURL はGoogle認証URLを生成するハンドラーメソッドを表す
+func (h *AuthHandler) GoogleAuthURL(c echo.Context) error {
+	state, err := h.generateState()
+	if err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, "Failed to generate state")
+	}
+
+	authURL := h.googleSvc.GenerateAuthURL(state)
+
+	response := &GoogleAuthURLResponse{
+		AuthURL: authURL,
+		State:   state,
+	}
+
+	return c.Redirect(http.StatusTemporaryRedirect, response.AuthURL)
+	// return c.JSON(http.StatusOK, response)
+}
+
 // GoogleLogin はGoogleログインのハンドラーメソッドを表す
 func (h *AuthHandler) GoogleLogin(c echo.Context) error {
 	var req GoogleLoginRequest
@@ -58,13 +111,21 @@ func (h *AuthHandler) GoogleLogin(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusBadRequest, "Invalid request")
 	}
 
+	spew.Dump(req)
+
+	// CSRF対策：stateを検証
+	// if !h.validateState(req.State) {
+	// 	return echo.NewHTTPError(http.StatusBadRequest, "Invalid state parameter")
+	// }
+
 	input := &usecase.GoogleLoginInput{
-		AuthorizationCode: req.AuthorizationCode,
-		RedirectURI:       req.RedirectURI,
+		AuthorizationCode: req.Code,
 	}
 
 	output, err := h.authUsecase.GoogleLogin(c.Request().Context(), input)
 	if err != nil {
+		spew.Dump(err)
+		fmt.Println(err)
 		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 	}
 

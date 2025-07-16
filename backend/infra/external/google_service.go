@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"os"
 	"stackies-backend/domain/model"
 	"stackies-backend/domain/service"
 
@@ -19,11 +20,18 @@ type GoogleServiceImpl struct {
 
 // NewGoogleService は新しいGoogleServiceを作成する
 func NewGoogleService(clientID, clientSecret string) service.GoogleService {
+	// 環境変数からリダイレクトURIを取得、デフォルトはlocalhost:3000
+	redirectURI := os.Getenv("GOOGLE_REDIRECT_URI")
+	if redirectURI == "" {
+		redirectURI = "http://localhost:8080/auth/google/login"
+	}
+
 	config := &oauth2.Config{
 		ClientID:     clientID,
 		ClientSecret: clientSecret,
-		RedirectURL:  "http://localhost:8080/auth/google/callback",
+		RedirectURL:  redirectURI,
 		Scopes: []string{
+			"openid",
 			"https://www.googleapis.com/auth/userinfo.email",
 			"https://www.googleapis.com/auth/userinfo.profile",
 		},
@@ -33,6 +41,11 @@ func NewGoogleService(clientID, clientSecret string) service.GoogleService {
 	return &GoogleServiceImpl{
 		config: config,
 	}
+}
+
+// GenerateAuthURL は認証URLを生成する
+func (g *GoogleServiceImpl) GenerateAuthURL(state string) string {
+	return g.config.AuthCodeURL(state, oauth2.AccessTypeOffline)
 }
 
 // ExchangeCode は認証コードをアクセストークンに交換する
@@ -45,7 +58,7 @@ func (g *GoogleServiceImpl) ExchangeCode(ctx context.Context, code, redirectURI 
 	return &model.AuthToken{
 		AccessToken:  token.AccessToken,
 		RefreshToken: token.RefreshToken,
-		ExpiresIn:    int(token.Expiry.Unix()),
+		ExpiresIn:    token.Expiry.Unix(),
 		TokenType:    token.TokenType,
 	}, nil
 }
