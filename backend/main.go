@@ -7,6 +7,7 @@ import (
 	"stackies-backend/infra/external"
 	"stackies-backend/infra/persistence"
 	"stackies-backend/presentation/handler"
+	authMiddleware "stackies-backend/presentation/middleware"
 	"stackies-backend/registry"
 	"stackies-backend/usecase"
 
@@ -39,6 +40,7 @@ func main() {
 	authUsecase := usecase.NewAuthUsecase(userRepo, authRepo, container.GetGoogleService(), container.GetJWTService())
 	googleSvc := external.NewGoogleService(os.Getenv("GOOGLE_CLIENT_ID"), os.Getenv("GOOGLE_CLIENT_SECRET"))
 	jwtSvc := external.NewJWTService(os.Getenv("JWT_SECRET"))
+	authMiddleware := authMiddleware.NewAuthMiddleware(jwtSvc)
 
 	container.SetGoogleService(googleSvc)
 	container.SetJWTService(jwtSvc)
@@ -50,7 +52,7 @@ func main() {
 	e.GET("/auth/google/login", authHandler.GoogleLogin)
 	e.POST("/auth/refresh", authHandler.RefreshToken)
 	e.POST("/auth/logout", authHandler.Logout)
-	e.GET("/auth/me", authHandler.GetMe)
+	e.GET("/auth/me", authHandler.GetMe, authMiddleware.Authenticate)
 
 	// ポート設定（環境変数から取得、デフォルトは8080）
 	port := os.Getenv("PORT")

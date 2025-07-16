@@ -3,6 +3,9 @@ package external
 import (
 	"errors"
 	"stackies-backend/domain/service"
+	"time"
+
+	"github.com/golang-jwt/jwt"
 )
 
 // JWTServiceImpl はJWTService interfaceの実装
@@ -19,34 +22,57 @@ func NewJWTService(secretKey string) service.JWTService {
 
 // GenerateToken はJWTアクセストークンを生成する
 func (j *JWTServiceImpl) GenerateToken(userID string) (string, error) {
-	// TODO: 実際のJWTライブラリを使用してトークンを生成
-	// ここでは仮の実装
 	if userID == "" {
 		return "", errors.New("userID cannot be empty")
 	}
-	return "mock_jwt_access_token_" + userID, nil
+
+	claims := jwt.MapClaims{
+		"user_id": userID,
+		"type":    "access",
+		"exp":     time.Now().Add(time.Hour * 24).Unix(),
+		"iat":     time.Now().Unix(),
+	}
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+	tokenString, err := token.SignedString([]byte(j.secretKey))
+	if err != nil {
+		return "", err
+	}
+
+	return tokenString, nil
 }
 
 // ValidateToken はJWTトークンを検証してユーザーIDを返す
 func (j *JWTServiceImpl) ValidateToken(token string) (string, error) {
-	// TODO: 実際のJWTライブラリを使用してトークンを検証
-	// ここでは仮の実装
-	if token == "" {
-		return "", errors.New("token cannot be empty")
+	parsedToken, err := jwt.Parse(token, func(token *jwt.Token) (interface{}, error) {
+		return []byte(j.secretKey), nil
+	})
+	if err != nil {
+		return "", err
 	}
-	if token == "invalid_token" {
+	claims, ok := parsedToken.Claims.(jwt.MapClaims)
+	if !ok {
 		return "", errors.New("invalid token")
 	}
-	// mock実装では単純にuserIDを返す
-	return "mock_user_id", nil
+	userID := claims["user_id"].(string)
+	return userID, nil
 }
 
 // GenerateRefreshToken はJWTリフレッシュトークンを生成する
 func (j *JWTServiceImpl) GenerateRefreshToken(userID string) (string, error) {
-	// TODO: 実際のJWTライブラリを使用してリフレッシュトークンを生成
-	// ここでは仮の実装
 	if userID == "" {
 		return "", errors.New("userID cannot be empty")
 	}
-	return "mock_jwt_refresh_token_" + userID, nil
+
+	claims := jwt.MapClaims{
+		"user_id": userID,
+		"type":    "refresh",
+		"exp":     time.Now().Add(time.Hour * 24 * 30).Unix(),
+		"iat":     time.Now().Unix(),
+	}
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+	tokenString, err := token.SignedString([]byte(j.secretKey))
+	if err != nil {
+		return "", err
+	}
+	return tokenString, nil
 }
