@@ -1,7 +1,6 @@
 import { computed } from 'vue'
 import { useAuthStore } from '../model/authStore'
-import { AUTH_CONSTANTS } from '@/shared/constants/auth'
-import type { GoogleOAuthResponse } from '@/shared/auth/types'
+import type { LoginRequest } from '@/shared/auth/types'
 
 export function useAuth() {
   const authStore = useAuthStore()
@@ -13,32 +12,8 @@ export function useAuth() {
   const error = computed(() => authStore.error)
   const isAuthenticated = computed(() => authStore.isAuthenticated)
 
-  const loginWithGoogle = () => {
-    if (!window.google) {
-      console.error('Google Identity Services library not loaded')
-      return
-    }
-
-    const client = window.google.accounts.oauth2.initCodeClient({
-      client_id: import.meta.env.VUE_APP_GOOGLE_CLIENT_ID,
-      scope: AUTH_CONSTANTS.GOOGLE_OAUTH.SCOPE,
-      callback: (response: GoogleOAuthResponse) => {
-        if (response.error) {
-          console.error('Google login error:', response)
-          return
-        }
-
-        if (response.code) {
-          authStore.login({
-            code: response.code,
-            redirectUri: window.location.origin + '/auth/callback'
-          })
-        }
-      },
-      ux_mode: AUTH_CONSTANTS.GOOGLE_OAUTH.UX_MODE,
-    })
-
-    client.requestCode()
+  const loginWithGoogle = (request: LoginRequest) => {
+    authStore.login(request)
   }
 
   const logout = async () => {

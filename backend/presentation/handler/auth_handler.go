@@ -41,28 +41,28 @@ type (
 
 	// GoogleLoginRequest はGoogleログインのリクエスト構造体を表す
 	GoogleLoginRequest struct {
-		State string `json:"state" query:"state" validate:"required"`
-		Code  string `json:"code" query:"code" validate:"required"`
+		State string `json:"state" validate:"required"`
+		Code  string `json:"code" validate:"required"`
 	}
 
 	// GoogleLoginResponse はGoogleログインのレスポンス構造体を表す
 	GoogleLoginResponse struct {
 		User         *model.User `json:"user"`
-		AccessToken  string      `json:"access_token"`
-		RefreshToken string      `json:"refresh_token"`
-		ExpiresIn    int64       `json:"expires_in"`
+		AccessToken  string      `json:"accessToken"`
+		RefreshToken string      `json:"refreshToken"`
+		ExpiresIn    int64       `json:"expiresIn"`
 	}
 
 	// RefreshTokenRequest はトークンリフレッシュのリクエスト構造体を表す
 	RefreshTokenRequest struct {
-		RefreshToken string `json:"refresh_token" validate:"required"`
+		RefreshToken string `json:"refreshToken" validate:"required"`
 	}
 
 	// RefreshTokenResponse はトークンリフレッシュのレスポンス構造体を表す
 	RefreshTokenResponse struct {
-		AccessToken  string `json:"access_token"`
-		RefreshToken string `json:"refresh_token"`
-		ExpiresIn    int64  `json:"expires_in"`
+		AccessToken  string `json:"accessToken"`
+		RefreshToken string `json:"refreshToken"`
+		ExpiresIn    int64  `json:"expiresIn"`
 	}
 )
 
@@ -100,8 +100,8 @@ func (h *AuthHandler) GoogleAuthURL(c echo.Context) error {
 		State:   state,
 	}
 
-	return c.Redirect(http.StatusTemporaryRedirect, response.AuthURL)
-	// return c.JSON(http.StatusOK, response)
+	// return c.Redirect(http.StatusTemporaryRedirect, response.AuthURL)
+	return c.JSON(http.StatusOK, response)
 }
 
 // GoogleLogin はGoogleログインのハンドラーメソッドを表す
@@ -135,6 +135,8 @@ func (h *AuthHandler) GoogleLogin(c echo.Context) error {
 		RefreshToken: output.RefreshToken,
 		ExpiresIn:    output.ExpiresIn,
 	}
+
+	spew.Dump(response)
 
 	return c.JSON(http.StatusOK, response)
 }

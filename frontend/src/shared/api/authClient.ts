@@ -2,13 +2,15 @@ import type { LoginRequest, LoginResponse, RefreshTokenRequest, RefreshTokenResp
 
 class AuthClient {
   async login(request: LoginRequest): Promise<LoginResponse> {
-    const response = await fetch('/api/auth/google/login', {
+    const response = await fetch(import.meta.env.VITE_APP_API_BASE_URL + '/auth/google/login', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'
       },
       body: JSON.stringify(request)
     })
+
+    console.log(response)
 
     if (!response.ok) {
       throw new Error(`Login failed: ${response.status} ${response.statusText}`)
@@ -18,7 +20,7 @@ class AuthClient {
   }
 
   async refreshToken(request: RefreshTokenRequest): Promise<RefreshTokenResponse> {
-    const response = await fetch('/api/auth/refresh', {
+    const response = await fetch(import.meta.env.VITE_APP_API_BASE_URL + '/auth/refresh', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'
@@ -34,7 +36,7 @@ class AuthClient {
   }
 
   async getUser(accessToken: string): Promise<User> {
-    const response = await fetch('/api/auth/me', {
+    const response = await fetch(import.meta.env.VITE_APP_API_BASE_URL + '/auth/me', {
       method: 'GET',
       headers: {
         'Authorization': `Bearer ${accessToken}`,
@@ -50,7 +52,7 @@ class AuthClient {
   }
 
   async logout(accessToken: string): Promise<void> {
-    const response = await fetch('/api/auth/logout', {
+    const response = await fetch(import.meta.env.VITE_APP_API_BASE_URL + '/auth/logout', {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${accessToken}`,

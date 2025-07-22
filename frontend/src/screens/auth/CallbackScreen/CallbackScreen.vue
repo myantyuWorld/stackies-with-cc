@@ -22,12 +22,13 @@ import { useAuth } from '@/features/auth/composables/useAuth'
 
 const router = useRouter()
 const route = useRoute()
-const { isAuthenticated } = useAuth()
+const { isAuthenticated, loginWithGoogle } = useAuth()
 
 onMounted(async () => {
   // URLからGoogle OAuth認証コードを取得
   const code = route.query.code as string
   const error = route.query.error as string
+  const state = route.query.state as string
 
   if (error) {
     // 認証エラーの場合はログイン画面にリダイレクト
@@ -35,6 +36,11 @@ onMounted(async () => {
     router.push('/login')
     return
   }
+
+  await loginWithGoogle({
+    code: code,
+    state: state
+  })
 
   if (code) {
     try {

@@ -7,42 +7,34 @@ Google OAuth2.0 + JWT認証を使用した認証システムの包括的設計�
 
 ```mermaid
 graph TB
-    subgraph "Frontend (Vue 3 + FSD)"
+    subgraph "Frontend (Vue 3 + Traditional Structure)"
         A[Vue App]
-        B[Auth Composable]
-        C[Auth Store]
-        D[LoginScreen]
-        E[CallbackScreen]
+        B[GoogleAuth Component]
+        C[useUser Composable]
+        D[authService]
     end
     
-    subgraph "Backend (Go + Clean Architecture)"
+    subgraph "Backend (Go + MVC Structure)"
         F[Auth Handler]
         G[Auth Middleware]
-        H[JWT Service]
-        I[Google OAuth Service]
-        J[Auth Usecase]
-        K[User Repository]
+        H[Google Service]
+        I[User Repository]
     end
     
     subgraph "External Services"
         L[Google OAuth2.0]
         M[User Database]
-        N[Redis Cache]
     end
     
     A --> B
     B --> C
-    D --> B
-    E --> B
-    A --> F
+    C --> D
+    D --> F
     F --> G
-    G --> H
+    F --> H
     F --> I
-    F --> J
-    J --> K
-    I --> L
-    K --> M
-    H --> N
+    H --> L
+    I --> M
 ```
 
 ## 認証フロー設計
@@ -56,21 +48,19 @@ sequenceDiagram
     participant B as Backend
     participant G as Google OAuth
     participant DB as Database
-    participant R as Redis
     
     U->>F: ログインボタンクリック
     F->>G: Google認証URLリダイレクト
     G->>U: Google認証画面
     U->>G: 認証実行
     G->>F: 認証コード付きリダイレクト
-    F->>B: 認証コード送信
+    F->>B: 認証コード送信 (/auth/google/callback)
     B->>G: アクセストークン取得
     G->>B: ユーザー情報取得
     B->>DB: ユーザー情報保存/更新
     B->>B: JWT生成
-    B->>R: トークン保存
     B->>F: JWT + ユーザー情報
-    F->>F: ローカルストレージ保存
+    F->>F: セッションストレージ保存
     F->>U: ログイン成功
 ```
 
@@ -81,18 +71,15 @@ sequenceDiagram
     participant F as Frontend
     participant B as Backend
     participant DB as Database
-    participant R as Redis
     
     F->>F: JWT取得
-    F->>B: API リクエスト + JWT
-    B->>R: トークン検証
+    F->>B: API リクエスト + JWT (/api/user/profile)
+    B->>B: JWT検証 (Middleware)
     alt JWT有効
-        R->>B: 検証成功
         B->>DB: ユーザー情報取得
         DB->>B: ユーザー情報
         B->>F: 認証成功レスポンス
     else JWT無効
-        R->>B: 検証失敗
         B->>F: 401 Unauthorized
         F->>F: ログイン画面表示
     end
@@ -100,63 +87,50 @@ sequenceDiagram
 
 ### 3. トークンリフレッシュフロー
 
+**現在未実装** - 現在の実装ではリフレッシュトークン機能は含まれていません。JWTの有効期限切れ時は再ログインが必要です。
+
 ```mermaid
 sequenceDiagram
     participant F as Frontend
     participant B as Backend
-    participant R as Redis
     
     F->>F: アクセストークン期限切れ検出
-    F->>B: リフレッシュトークン送信
-    B->>R: リフレッシュトークン検証
-    alt 有効
-        R->>B: 検証成功
-        B->>B: 新しいJWT生成
-        B->>R: 新しいトークン保存
-        B->>F: 新しいJWT
-        F->>F: トークン更新
-    else 無効
-        R->>B: 検証失敗
-        B->>F: 401 Unauthorized
-        F->>F: ログイン画面表示
-    end
+    F->>F: ログイン画面表示
+    Note over F,B: 現在はリフレッシュトークン未実装のため<br/>再ログインが必要
 ```
 
 ## バックエンド認証設計
 
-### 1. クリーンアーキテクチャ構造
+### 1. 実装アーキテクチャ構造 (MVC Pattern)
 
 ```mermaid
 graph LR
-    subgraph "Presentation Layer"
-        A[Auth Handler]
-        B[Auth Middleware]
+    subgraph "server/handlers"
+        A[google_auth.go]
     end
     
-    subgraph "Usecase Layer"
-        C[Auth Usecase]
+    subgraph "server/middleware"
+        B[auth.go]
     end
     
-    subgraph "Domain Layer"
-        D[User Model]
-        E[Auth Repository]
+    subgraph "server/services"
+        C[google_service.go]
     end
     
-    subgraph "Infrastructure Layer"
-        F[JWT Service]
-        G[Google OAuth Service]
-        H[User Repository]
-        I[Redis Repository]
+    subgraph "server/database"
+        D[users.go]
+        E[database.go]
+    end
+    
+    subgraph "server/models"
+        F[user.go]
     end
     
     A --> C
-    B --> C
-    C --> D
-    C --> E
+    A --> D
+    B --> D
     C --> F
-    C --> G
-    E --> H
-    E --> I
+    D --> F
 ```
 
 ### 2. JWT認証設計
@@ -189,65 +163,59 @@ graph TD
 
 ## フロントエンド認証設計
 
-### 1. FSDアーキテクチャ構造
+### 1. 実装フロントエンド構造 (Traditional Vue.js)
 
 ```mermaid
 graph TB
-    subgraph "App Layer"
-        A[App Router]
-        B[App Composables]
-        C[App Context]
+    subgraph "src/components"
+        A[GoogleAuth.vue]
     end
     
-    subgraph "Screens Layer"
-        D[LoginScreen]
-        E[CallbackScreen]
+    subgraph "src/composables"
+        B[useUser.ts]
     end
     
-    subgraph "Features Layer"
-        F[Auth Feature]
-        G[Auth Composable]
-        H[Auth Store]
-        I[Auth API]
+    subgraph "src/services"
+        C[authService.ts]
     end
     
-    subgraph "Shared Layer"
-        J[Shared UI]
-        K[Shared API]
-        L[Shared Constants]
+    subgraph "src/types"
+        D[user.ts]
     end
     
-    D --> F
-    E --> F
-    F --> G
-    G --> H
-    G --> I
-    F --> J
-    F --> K
-    A --> F
-    B --> G
+    subgraph "src/router"
+        E[index.ts]
+    end
+    
+    A --> B
+    B --> C
+    B --> D
+    A --> E
+    C --> D
 ```
 
-### 2. Features Layer 詳細設計
+### 2. 実装コンポーネント詳細
 
 ```mermaid
 graph LR
-    subgraph "features/auth/"
-        A[api/authAPI.ts]
-        B[composables/useAuth.ts]
-        C[lib/googleAuth.ts]
-        D[lib/errorHandler.ts]
-        E[model/authStore.ts]
-        F[ui/LoginForm.vue]
-        G[ui/UserProfile.vue]
+    subgraph "実装済みファイル"
+        A[GoogleAuth.vue]
+        B[useUser.ts]
+        C[authService.ts]
+        D[user.ts]
     end
     
-    B --> A
-    B --> C
-    B --> D
-    B --> E
-    F --> B
-    G --> B
+    subgraph "機能"
+        E[Google認証]
+        F[ユーザー状態管理]
+        G[認証API呼び出し]
+        H[型定義]
+    end
+    
+    A --> E
+    B --> F
+    C --> G
+    D --> H
 ```
 
 ### 3. 認証状態管理
@@ -348,19 +316,20 @@ graph LR
 
 ## API設計
 
-### 1. 認証エンドポイント
+### 1. 実装済み認証エンドポイント
 
 ```mermaid
 graph TD
-    A[POST /api/auth/google/login] --> B[Google OAuth認証]
-    C[POST /api/auth/refresh] --> D[JWTリフレッシュ]
-    E[POST /api/auth/logout] --> F[ログアウト]
-    G[GET /api/auth/me] --> H[ユーザー情報取得]
+    A[POST /auth/google/login] --> B[Google OAuth URL生成]
+    C[GET /auth/google/callback] --> D[認証コード処理]
+    E[GET /api/user/profile] --> F[ユーザー情報取得]
     
-    B --> I[認証成功レスポンス]
-    D --> J[新しいJWT]
-    F --> K[ログアウト成功]
-    H --> L[ユーザー情報]
+    B --> G[リダイレクトURL]
+    D --> H[JWT + ユーザー情報]
+    F --> I[認証済みユーザー情報]
+    
+    Note1[未実装: リフレッシュエンドポイント]
+    Note2[未実装: ログアウトエンドポイント]
 ```
 
 ### 2. レスポンス設計
@@ -376,21 +345,22 @@ graph LR
 
 ## セキュリティ要件設計
 
-### 1. セキュリティポリシー
+### 1. 実装済みセキュリティポリシー
 
 ```mermaid
 graph TD
     A[セキュリティ要件] --> B[JWT有効期限]
-    A --> C[HTTPS必須]
-    A --> D[CSRF対策]
-    A --> E[XSS対策]
-    A --> F[SQLインジェクション対策]
-    A --> G[Redisセキュリティ]
+    A --> C[HTTPS推奨]
+    A --> D[JWT検証]
+    A --> E[Google OAuth2.0]
     
-    B --> H[アクセストークン: 1時間]
-    B --> I[リフレッシュトークン: 7日]
-    G --> J[Redis認証]
-    G --> K[Redis暗号化]
+    B --> F[現在の設定を確認要]
+    D --> G[ミドルウェアで実装済み]
+    E --> H[Google認証フロー実装済み]
+    
+    Note1[未実装: CSRF対策]
+    Note2[未実装: Redis使用]
+    Note3[未実装: リフレッシュトークン]
 ```
 
 ### 2. エラーハンドリング設計
@@ -411,14 +381,15 @@ flowchart TD
 
 ## パフォーマンス設計
 
-### 1. キャッシュ戦略
+### 1. 実装済みキャッシュ戦略
 
 ```mermaid
 graph LR
-    A[ユーザー情報] --> B[メモリキャッシュ]
-    C[JWT検証結果] --> D[Redisキャッシュ]
-    E[Google OAuth情報] --> F[セッションキャッシュ]
-    G[認証状態] --> H[ローカルストレージ]
+    A[認証状態] --> B[セッションストレージ]
+    C[ユーザー情報] --> D[Vue Composable State]
+    
+    Note1[未実装: Redisキャッシュ]
+    Note2[未実装: メモリキャッシュ]
 ```
 
 ### 2. 最適化戦略
@@ -465,95 +436,45 @@ graph LR
 
 ## 実装詳細
 
-### 1. バックエンド実装構造
+### 1. 実装済みバックエンド構造
 
 ```
-backend/
-├── cmd/
-│   └── main.go
-├── core/
-│   ├── errors/
-│   └── logger/
-├── domain/
-│   ├── model/
-│   │   ├── user.go
-│   │   └── auth.go
-│   └── repository/
-│       ├── user_repository.go
-│       └── auth_repository.go
-├── usecase/
-│   └── auth_usecase.go
-├── presentation/
-│   ├── handler/
-│   │   └── auth_handler.go
-│   └── middleware/
-│       └── auth_middleware.go
-├── infra/
-│   ├── external/
-│   │   ├── google_service.go
-│   │   └── jwt_service.go
-│   ├── dto/
-│   │   └── user_dto.go
-│   ├── persistence/
-│   │   ├── user_repository.go
-│   │   └── auth_repository.go
-│   └── db/
-│       └── database.go
-└── registry/
-    └── registry.go
+server/
+├── main.go                    # エントリーポイント
+├── handlers/
+│   └── google_auth.go         # Google認証ハンドラー
+├── middleware/
+│   └── auth.go                # JWT認証ミドルウェア
+├── services/
+│   └── google_service.go      # Google OAuth サービス
+├── database/
+│   ├── database.go            # DB接続設定
+│   └── users.go               # ユーザーリポジトリ
+└── models/
+    └── user.go                # ユーザーモデル
 ```
 
-### 2. フロントエンド実装構造
+### 2. 実装済みフロントエンド構造
 
 ```
-frontend/
-├── app/
-│   ├── composables/
-│   │   └── useAppAuth.ts
-│   ├── routing/
-│   │   └── authRoutes.ts
-│   └── context/
-│       └── AuthContext.tsx
-├── screens/
-│   ├── LoginScreen/
-│   │   └── LoginScreen.vue
-│   └── CallbackScreen/
-│       └── CallbackScreen.vue
-├── features/
-│   └── auth/
-│       ├── api/
-│       │   └── authAPI.ts
-│       ├── composables/
-│       │   └── useAuth.ts
-│       ├── lib/
-│       │   ├── googleAuth.ts
-│       │   └── errorHandler.ts
-│       ├── model/
-│       │   └── authStore.ts
-│       └── ui/
-│           ├── LoginForm.vue
-│           └── UserProfile.vue
-└── shared/
-    ├── api/
-    │   └── auth.ts
-    ├── auth/
-    │   └── authService.ts
-    ├── constants/
-    │   └── auth.ts
-    ├── ui/
-    │   ├── Button/
-    │   │   └── GoogleLoginButton.vue
-    │   ├── LoadingSpinner/
-    │   │   └── LoadingSpinner.vue
-    │   └── ErrorMessage/
-    │       └── ErrorMessage.vue
-    └── lib/
-        └── utils.ts
+frontend/src/
+├── components/
+│   └── Google/
+│       └── GoogleAuth.vue     # Google認証コンポーネント
+├── composables/
+│   └── useUser.ts             # ユーザー状態管理
+├── services/
+│   └── authService.ts         # 認証API サービス
+├── types/
+│   └── user.ts                # ユーザー型定義
+├── router/
+│   └── index.ts               # ルーティング設定
+└── main.ts                    # アプリエントリーポイント
 ```
 
 ## 環境設定
 
-### 1. バックエンド環境変数
+### 1. 実装済みバックエンド環境変数
 
 ```bash
 # Google OAuth2.0
@@ -561,83 +482,65 @@ GOOGLE_CLIENT_ID=your-google-client-id
 GOOGLE_CLIENT_SECRET=your-google-client-secret
 
 # JWT
-JWT_SECRET_KEY=your-jwt-secret-key
-JWT_ACCESS_TOKEN_EXPIRY=1h
-JWT_REFRESH_TOKEN_EXPIRY=168h
+JWT_SECRET=your-jwt-secret-key
 
 # Database
 DATABASE_URL=postgresql://user:password@localhost:5432/dbname
 
-# Redis
-REDIS_URL=redis://localhost:6379
-REDIS_PASSWORD=your-redis-password
-
 # Server
-SERVER_PORT=8080
-SERVER_HOST=localhost
+PORT=8080
+
+# 注意: 以下は未実装
+# REDIS_URL (Redis未使用)
+# JWT_REFRESH_TOKEN_EXPIRY (リフレッシュトークン未実装)
 ```
 
-### 2. フロントエンド環境変数
+### 2. 実装済みフロントエンド環境変数
 
 ```bash
 # Google OAuth2.0
-VUE_APP_GOOGLE_CLIENT_ID=your-google-client-id
-VUE_APP_GOOGLE_REDIRECT_URI=http://localhost:3000/auth/callback
+VITE_GOOGLE_CLIENT_ID=your-google-client-id
 
 # API
-VUE_APP_API_BASE_URL=http://localhost:8080
+VITE_API_BASE_URL=http://localhost:8080
 
-# App
-VUE_APP_APP_NAME=Stackies
-VUE_APP_APP_VERSION=1.0.0
+# 注意: 実装を確認してViteベースの環境変数設定を使用
 ```
 
-## 実装優先順位
+## 実装状況と今後の課題
 
-### 1. Phase 1: 基盤実装 (Week 1-2)
+### ✅ 実装済み機能
 1. **バックエンド基盤**
-   - JWT認証基盤
-   - Google OAuth2.0統合
-   - 基本的な認証フロー
-   - データベース設計・実装
+   - ✅ JWT認証基盤
+   - ✅ Google OAuth2.0統合
+   - ✅ 基本的な認証フロー
+   - ✅ データベース設計・実装
+   - ✅ 認証ミドルウェア実装
 
 2. **フロントエンド基盤**
-   - Shared Layer (API Client, Constants)
-   - Features Layer (Store, API, Composable)
-   - Basic UI Components
+   - ✅ Google認証コンポーネント
+   - ✅ ユーザー状態管理 (Composable)
+   - ✅ 認証API サービス
+   - ✅ 基本的な認証フロー
 
-### 2. Phase 2: 機能実装 (Week 3-4)
-1. **バックエンド機能**
-   - トークンリフレッシュ機能
-   - 認証ミドルウェア実装
-   - エラーハンドリング
+### 🔄 今後の実装課題
+1. **セキュリティ強化**
+   - ❌ トークンリフレッシュ機能
+   - ❌ ログアウト機能
+   - ❌ CSRF対策
+   - ❌ レート制限実装
 
-2. **フロントエンド機能**
-   - LoginScreen
-   - CallbackScreen
-   - Auth Flow Integration
+2. **パフォーマンス向上**
+   - ❌ Redisキャッシュ実装
+   - ❌ セッション管理最適化
 
-### 3. Phase 3: セキュリティ強化 (Week 5-6)
-1. **セキュリティ実装**
-   - セキュリティヘッダー実装
-   - レート制限実装
-   - Redisセキュリティ設定
+3. **アーキテクチャ改善**
+   - ❌ クリーンアーキテクチャへの移行
+   - ❌ FSDアーキテクチャ採用
 
-2. **監視・ログ実装**
-   - 認証ログ実装
-   - メトリクス収集
-   - セキュリティ監視
-
-### 4. Phase 4: 最適化・デプロイ (Week 7-8)
-1. **パフォーマンス最適化**
-   - キャッシュ戦略実装
-   - レスポンス最適化
-   - フロントエンド最適化
-
-2. **デプロイメント**
-   - 環境設定
-   - CI/CD実装
-   - 本番デプロイ
+4. **監視・ログ**
+   - ❌ 認証ログ実装
+   - ❌ セキュリティ監視
 
 ## テスト戦略
 

@@ -70,7 +70,7 @@ describe('Auth Store', () => {
 
         const loginRequest: LoginRequest = {
           code: 'google-auth-code',
-          redirectUri: 'http://localhost:3000/auth/callback'
+          state: 'google-auth-state'
         }
 
         const loginPromise = store.login(loginRequest)
@@ -99,7 +99,7 @@ describe('Auth Store', () => {
 
         const loginRequest: LoginRequest = {
           code: 'google-auth-code',
-          redirectUri: 'http://localhost:3000/auth/callback'
+          state: 'google-auth-state'
         }
 
         await store.login(loginRequest)
@@ -128,7 +128,7 @@ describe('Auth Store', () => {
 
         const loginRequest: LoginRequest = {
           code: 'google-auth-code',
-          redirectUri: 'http://localhost:3000/auth/callback'
+          state: 'google-auth-state'
         }
 
         await store.login(loginRequest)
@@ -146,7 +146,7 @@ describe('Auth Store', () => {
 
         const loginRequest: LoginRequest = {
           code: 'invalid-code',
-          redirectUri: 'http://localhost:3000/auth/callback'
+          state: 'google-auth-state'
         }
 
         await store.login(loginRequest)

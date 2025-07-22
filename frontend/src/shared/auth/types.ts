@@ -15,7 +15,7 @@ export interface AuthState {
 
 export interface LoginRequest {
   code: string
-  redirectUri: string
+  state: string
 }
 
 export interface LoginResponse {

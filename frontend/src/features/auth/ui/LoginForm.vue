@@ -29,10 +29,18 @@
 <script setup lang="ts">
 import { useAuth } from '@/features/auth/composables/useAuth'
 
-const { loginWithGoogle, isLoading, error } = useAuth()
+const { isLoading, error } = useAuth()
 
-const handleGoogleLogin = () => {
-  loginWithGoogle()
+const handleGoogleLogin = async () => {
+  // まずバックエンドからGoogle認証URLを取得
+  console.log(import.meta.env.VITE_APP_API_BASE_URL)
+
+  const res = await fetch(import.meta.env.VITE_APP_API_BASE_URL + '/auth/google/url');
+  console.log(res)
+  
+  const { auth_url } = await res.json();
+  // 取得したURLにリダイレクト
+  window.location.href = auth_url;
 }
 </script>
 

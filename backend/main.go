@@ -49,7 +49,7 @@ func main() {
 
 	e.GET("/health", healthCheck)
 	e.GET("/auth/google/url", authHandler.GoogleAuthURL)
-	e.GET("/auth/google/login", authHandler.GoogleLogin)
+	e.POST("/auth/google/login", authHandler.GoogleLogin)
 	e.POST("/auth/refresh", authHandler.RefreshToken)
 	e.POST("/auth/logout", authHandler.Logout)
 	e.GET("/auth/me", authHandler.GetMe, authMiddleware.Authenticate)

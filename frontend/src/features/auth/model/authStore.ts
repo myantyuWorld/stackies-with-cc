@@ -14,6 +14,7 @@ export const useAuthStore = defineStore('auth', () => {
   const isAuthenticated = computed(() => !!accessToken.value && !!user.value)
 
   const login = async (request: LoginRequest) => {
+    console.log('login')
     try {
       isLoading.value = true
       error.value = null
@@ -58,6 +59,7 @@ export const useAuthStore = defineStore('auth', () => {
   }
 
   const initializeAuth = async () => {
+    console.log('initializeAuth')
     try {
       isLoading.value = true
       
