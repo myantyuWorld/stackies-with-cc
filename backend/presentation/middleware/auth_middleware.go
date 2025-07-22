@@ -2,7 +2,7 @@ package middleware
 
 import (
 	"net/http"
-	"stackies-backend/infra/external"
+	"stackies-backend/domain/service"
 	"strings"
 
 	"github.com/labstack/echo/v4"
@@ -10,11 +10,11 @@ import (
 
 // AuthMiddleware は認証ミドルウェアを表す
 type AuthMiddleware struct {
-	jwtSvc external.JWTService
+	jwtSvc service.JWTService
 }
 
 // NewAuthMiddleware はAuthMiddlewareの新しいインスタンスを作成する
-func NewAuthMiddleware(jwtSvc external.JWTService) *AuthMiddleware {
+func NewAuthMiddleware(jwtSvc service.JWTService) *AuthMiddleware {
 	return &AuthMiddleware{
 		jwtSvc: jwtSvc,
 	}
@@ -33,12 +33,12 @@ func (m *AuthMiddleware) Authenticate(next echo.HandlerFunc) echo.HandlerFunc {
 			return echo.NewHTTPError(http.StatusUnauthorized, "Invalid authorization header format")
 		}
 
-		claims, err := m.jwtSvc.ValidateToken(token)
+		userID, err := m.jwtSvc.ValidateToken(token)
 		if err != nil {
 			return echo.NewHTTPError(http.StatusUnauthorized, "Invalid token")
 		}
 
-		c.Set("user_id", claims.UserID)
+		c.Set("user_id", userID)
 		return next(c)
 	}
 }
