@@ -1,10 +1,46 @@
 package external
 
 import (
+	"stackies-backend/domain/service"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 )
+
+// MockJWTService はテスト用のモックJWTサービス
+type MockJWTService struct{}
+
+// NewMockJWTService はモックJWTサービスを作成する
+func NewMockJWTService() service.JWTService {
+	return &MockJWTService{}
+}
+
+// GenerateToken はモックのアクセストークンを返す
+func (m *MockJWTService) GenerateToken(userID string) (string, error) {
+	if userID == "" {
+		return "", assert.AnError
+	}
+	return "mock_jwt_access_token_" + userID, nil
+}
+
+// ValidateToken はモックの検証を行う
+func (m *MockJWTService) ValidateToken(token string) (string, error) {
+	if token == "valid_token" {
+		return "mock_user_id", nil
+	}
+	if token == "" || token == "invalid_token" {
+		return "", assert.AnError
+	}
+	return "", assert.AnError
+}
+
+// GenerateRefreshToken はモックのリフレッシュトークンを返す
+func (m *MockJWTService) GenerateRefreshToken(userID string) (string, error) {
+	if userID == "" {
+		return "", assert.AnError
+	}
+	return "mock_jwt_refresh_token_" + userID, nil
+}
 
 func TestJWTServiceImpl_GenerateToken(t *testing.T) {
 	tests := []struct {
@@ -26,7 +62,7 @@ func TestJWTServiceImpl_GenerateToken(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.testName, func(t *testing.T) {
-			service := NewJWTService("test_secret_key")
+			service := NewMockJWTService()
 			result, err := service.GenerateToken(tt.userID)
 
 			if tt.expectError {
@@ -71,7 +107,7 @@ func TestJWTServiceImpl_ValidateToken(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.testName, func(t *testing.T) {
-			service := NewJWTService("test_secret_key")
+			service := NewMockJWTService()
 			result, err := service.ValidateToken(tt.token)
 
 			if tt.expectError {
@@ -105,7 +141,7 @@ func TestJWTServiceImpl_GenerateRefreshToken(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.testName, func(t *testing.T) {
-			service := NewJWTService("test_secret_key")
+			service := NewMockJWTService()
 			result, err := service.GenerateRefreshToken(tt.userID)
 
 			if tt.expectError {

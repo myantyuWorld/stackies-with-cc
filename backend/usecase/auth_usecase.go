@@ -47,15 +47,15 @@ type (
 	LogoutInput struct {
 		UserID string
 	}
-)
 
-// AuthUsecaseImpl はAuthUsecaseの実装
-type AuthUsecaseImpl struct {
-	userRepo  repository.UserRepository
-	authRepo  repository.AuthRepository
-	googleSvc service.GoogleService
-	jwtSvc    service.JWTService
-}
+	// AuthUsecaseImpl はAuthUsecaseの実装
+	AuthUsecaseImpl struct {
+		userRepo  repository.UserRepository
+		authRepo  repository.AuthRepository
+		googleSvc service.GoogleService
+		jwtSvc    service.JWTService
+	}
+)
 
 // NewAuthUsecase は新しいAuthUsecaseを作成する
 func NewAuthUsecase(

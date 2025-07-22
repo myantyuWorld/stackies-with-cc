@@ -83,6 +83,11 @@ type MockGoogleService struct {
 
 var _ service.GoogleService = (*MockGoogleService)(nil)
 
+func (m *MockGoogleService) GenerateAuthURL(state string) string {
+	args := m.Called(state)
+	return args.String(0)
+}
+
 func (m *MockGoogleService) ExchangeCode(ctx context.Context, code, redirectURI string) (*model.AuthToken, error) {
 	args := m.Called(ctx, code, redirectURI)
 	if args.Get(0) == nil {

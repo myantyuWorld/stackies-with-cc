@@ -75,6 +75,32 @@ func (m *MockUserRepository) Update(ctx context.Context, user *model.User) error
 	return args.Error(0)
 }
 
+// MockGoogleService はGoogleServiceのモック
+type MockGoogleService struct {
+	mock.Mock
+}
+
+func (m *MockGoogleService) GenerateAuthURL(state string) string {
+	args := m.Called(state)
+	return args.String(0)
+}
+
+func (m *MockGoogleService) ExchangeCode(ctx context.Context, code, redirectURI string) (*model.AuthToken, error) {
+	args := m.Called(ctx, code, redirectURI)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*model.AuthToken), args.Error(1)
+}
+
+func (m *MockGoogleService) GetUserInfo(ctx context.Context, accessToken string) (*model.GoogleUserInfo, error) {
+	args := m.Called(ctx, accessToken)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*model.GoogleUserInfo), args.Error(1)
+}
+
 func TestAuthHandler_GoogleLogin(t *testing.T) {
 	tests := []struct {
 		testName       string
@@ -86,8 +112,8 @@ func TestAuthHandler_GoogleLogin(t *testing.T) {
 		{
 			testName: "正常なGoogleログイン",
 			requestBody: GoogleLoginRequest{
-				AuthorizationCode: "valid_code",
-				RedirectURI:       "http://localhost:3000/callback",
+				State: "test_state",
+				Code:  "valid_code",
 			},
 			setupMocks: func(authUC *MockAuthUsecase, userRepo *MockUserRepository) {
 				user := &model.User{
@@ -125,7 +151,8 @@ func TestAuthHandler_GoogleLogin(t *testing.T) {
 			userRepo := new(MockUserRepository)
 			tt.setupMocks(authUC, userRepo)
 
-			handler := NewAuthHandler(authUC, userRepo)
+			googleSvc := new(MockGoogleService)
+			handler := NewAuthHandler(authUC, userRepo, googleSvc)
 
 			e := echo.New()
 			body, _ := json.Marshal(tt.requestBody)
@@ -189,7 +216,8 @@ func TestAuthHandler_RefreshToken(t *testing.T) {
 			userRepo := new(MockUserRepository)
 			tt.setupMocks(authUC, userRepo)
 
-			handler := NewAuthHandler(authUC, userRepo)
+			googleSvc := new(MockGoogleService)
+			handler := NewAuthHandler(authUC, userRepo, googleSvc)
 
 			e := echo.New()
 			body, _ := json.Marshal(tt.requestBody)
@@ -238,7 +266,8 @@ func TestAuthHandler_Logout(t *testing.T) {
 			userRepo := new(MockUserRepository)
 			tt.setupMocks(authUC, userRepo)
 
-			handler := NewAuthHandler(authUC, userRepo)
+			googleSvc := new(MockGoogleService)
+			handler := NewAuthHandler(authUC, userRepo, googleSvc)
 
 			e := echo.New()
 			req := httptest.NewRequest(http.MethodPost, "/auth/logout", nil)
@@ -303,7 +332,8 @@ func TestAuthHandler_GetMe(t *testing.T) {
 			userRepo := new(MockUserRepository)
 			tt.setupMocks(authUC, userRepo)
 
-			handler := NewAuthHandler(authUC, userRepo)
+			googleSvc := new(MockGoogleService)
+			handler := NewAuthHandler(authUC, userRepo, googleSvc)
 
 			e := echo.New()
 			req := httptest.NewRequest(http.MethodGet, "/auth/me", nil)
