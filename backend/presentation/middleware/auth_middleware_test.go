@@ -121,7 +121,7 @@ func TestAuthMiddleware_Authenticate(t *testing.T) {
 			} else {
 				assert.Error(t, err)
 				assert.False(t, nextCalled)
-				
+
 				// Echo HTTPErrorの場合はステータスコードをチェック
 				if httpErr, ok := err.(*echo.HTTPError); ok {
 					assert.Equal(t, tt.expectedStatus, httpErr.Code)

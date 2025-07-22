@@ -27,7 +27,7 @@ func (m *MockGoogleService) ExchangeCode(ctx context.Context, code, redirectURI 
 	if code == "error_code" {
 		return nil, assert.AnError
 	}
-	
+
 	return &model.AuthToken{
 		AccessToken:  "mock_access_token",
 		RefreshToken: "mock_refresh_token",

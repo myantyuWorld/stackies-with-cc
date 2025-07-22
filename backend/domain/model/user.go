@@ -57,11 +57,11 @@ func (u *User) UpdateProfile(name, picture string) error {
 	if strings.TrimSpace(name) == "" {
 		return errors.New("name cannot be empty")
 	}
-	
+
 	u.Name = name
 	u.Picture = picture
 	u.UpdatedAt = time.Now()
-	
+
 	return nil
 }
 
