@@ -79,8 +79,6 @@ describe('useAuth Composable', () => {
   })
 
   it('should handle Google OAuth response correctly', async () => {
-    const { useAuth } = await import('../useAuth')
-    const auth = useAuth()
     
     const mockResponse: GoogleOAuthResponse = {
       code: 'test-auth-code'
@@ -90,8 +88,6 @@ describe('useAuth Composable', () => {
   })
 
   it('should handle Google OAuth error correctly', async () => {
-    const { useAuth } = await import('../useAuth')
-    const auth = useAuth()
     
     const mockErrorResponse: GoogleOAuthResponse = {
       error: 'access_denied',
