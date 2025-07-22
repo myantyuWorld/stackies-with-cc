@@ -1,0 +1,1268 @@
+openapi: 3.0.3
+info:
+  title: stackies!(技術スタック・案件管理システム) API
+  description: |
+    stackies!(技術スタック・案件管理システム)のAPI仕様書。
+    エンジニアが自身の案件経験と技術スタックを管理するためのシステム。
+  version: 1.0.0
+  contact:
+    name: stackies!(技術スタック・案件管理システム)
+servers:
+  - url: https://api.stackies.com/v1
+    description: 本番環境
+  - url: https://staging-api.stackies.com/v1
+    description: ステージング環境
+
+security:
+  - bearerAuth: []
+
+paths:
+  # 認証関連
+  /auth/login:
+    post:
+      tags:
+        - 認証
+      summary: ユーザーログイン
+      description: メールアドレスとパスワードでユーザー認証を行う
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+      responses:
+        '200':
+          description: ログイン成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+        '401':
+          description: 認証失敗
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /auth/logout:
+    post:
+      tags:
+        - 認証
+      summary: ユーザーログアウト
+      description: ユーザーのログアウト処理
+      responses:
+        '204':
+          description: ログアウト成功
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /auth/me:
+    get:
+      tags:
+        - 認証
+      summary: 現在のユーザー情報取得
+      description: 認証済みユーザーの情報を取得
+      responses:
+        '200':
+          description: ユーザー情報取得成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  # 案件管理
+  /projects:
+    get:
+      tags:
+        - 案件管理
+      summary: 案件一覧取得
+      description: ユーザーの案件一覧を取得
+      parameters:
+        - name: page
+          in: query
+          description: ページ番号
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+        - name: limit
+          in: query
+          description: 1ページあたりの件数
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+        - name: sort
+          in: query
+          description: ソート順
+          schema:
+            type: string
+            enum: [start_date_asc, start_date_desc, end_date_asc, end_date_desc, name_asc, name_desc]
+            default: start_date_desc
+      responses:
+        '200':
+          description: 案件一覧取得成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProjectListResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+    post:
+      tags:
+        - 案件管理
+      summary: 案件登録
+      description: 新しい案件を登録
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProjectCreateRequest'
+      responses:
+        '201':
+          description: 案件登録成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Project'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /projects/{projectId}:
+    get:
+      tags:
+        - 案件管理
+      summary: 案件詳細取得
+      description: 指定された案件の詳細情報を取得
+      parameters:
+        - $ref: '#/components/parameters/ProjectId'
+      responses:
+        '200':
+          description: 案件詳細取得成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProjectDetail'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+    put:
+      tags:
+        - 案件管理
+      summary: 案件更新
+      description: 案件情報を更新
+      parameters:
+        - $ref: '#/components/parameters/ProjectId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProjectUpdateRequest'
+      responses:
+        '200':
+          description: 案件更新成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Project'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+    delete:
+      tags:
+        - 案件管理
+      summary: 案件削除
+      description: 案件を削除
+      parameters:
+        - $ref: '#/components/parameters/ProjectId'
+      responses:
+        '204':
+          description: 案件削除成功
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  # 技術スタック管理
+  /technologies:
+    get:
+      tags:
+        - 技術スタック管理
+      summary: 技術一覧取得
+      description: 登録されている技術の一覧を取得
+      parameters:
+        - name: category
+          in: query
+          description: カテゴリによるフィルタ
+          schema:
+            type: string
+        - name: page
+          in: query
+          description: ページ番号
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+        - name: limit
+          in: query
+          description: 1ページあたりの件数
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+      responses:
+        '200':
+          description: 技術一覧取得成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TechnologyListResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+    post:
+      tags:
+        - 技術スタック管理
+      summary: 技術登録
+      description: 新しい技術を登録
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TechnologyCreateRequest'
+      responses:
+        '201':
+          description: 技術登録成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Technology'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /technologies/{technologyId}:
+    get:
+      tags:
+        - 技術スタック管理
+      summary: 技術詳細取得
+      description: 指定された技術の詳細情報を取得
+      parameters:
+        - $ref: '#/components/parameters/TechnologyId'
+      responses:
+        '200':
+          description: 技術詳細取得成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Technology'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+    put:
+      tags:
+        - 技術スタック管理
+      summary: 技術更新
+      description: 技術情報を更新
+      parameters:
+        - $ref: '#/components/parameters/TechnologyId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TechnologyUpdateRequest'
+      responses:
+        '200':
+          description: 技術更新成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Technology'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+    delete:
+      tags:
+        - 技術スタック管理
+      summary: 技術削除
+      description: 技術を削除
+      parameters:
+        - $ref: '#/components/parameters/TechnologyId'
+      responses:
+        '204':
+          description: 技術削除成功
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  # スキル管理
+  /skills:
+    get:
+      tags:
+        - スキル管理
+      summary: スキル一覧取得
+      description: ユーザーのスキル一覧を取得
+      parameters:
+        - name: category
+          in: query
+          description: カテゴリによるフィルタ
+          schema:
+            type: string
+        - name: skill_level
+          in: query
+          description: スキルレベルによるフィルタ
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 5
+        - name: sort
+          in: query
+          description: ソート順
+          schema:
+            type: string
+            enum: [skill_level_asc, skill_level_desc, experience_years_asc, experience_years_desc, name_asc, name_desc]
+            default: skill_level_desc
+      responses:
+        '200':
+          description: スキル一覧取得成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SkillListResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+    post:
+      tags:
+        - スキル管理
+      summary: スキル登録
+      description: 新しいスキルを登録
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SkillCreateRequest'
+      responses:
+        '201':
+          description: スキル登録成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Skill'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /skills/{skillId}:
+    get:
+      tags:
+        - スキル管理
+      summary: スキル詳細取得
+      description: 指定されたスキルの詳細情報を取得
+      parameters:
+        - $ref: '#/components/parameters/SkillId'
+      responses:
+        '200':
+          description: スキル詳細取得成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Skill'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+    put:
+      tags:
+        - スキル管理
+      summary: スキル更新
+      description: スキル情報を更新
+      parameters:
+        - $ref: '#/components/parameters/SkillId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SkillUpdateRequest'
+      responses:
+        '200':
+          description: スキル更新成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Skill'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+    delete:
+      tags:
+        - スキル管理
+      summary: スキル削除
+      description: スキルを削除
+      parameters:
+        - $ref: '#/components/parameters/SkillId'
+      responses:
+        '204':
+          description: スキル削除成功
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  # 案件-技術関連付け
+  /projects/{projectId}/technologies:
+    get:
+      tags:
+        - 案件-技術関連付け
+      summary: 案件の技術一覧取得
+      description: 指定された案件で使用した技術の一覧を取得
+      parameters:
+        - $ref: '#/components/parameters/ProjectId'
+      responses:
+        '200':
+          description: 案件技術一覧取得成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProjectTechnologyListResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+    post:
+      tags:
+        - 案件-技術関連付け
+      summary: 案件に技術を関連付け
+      description: 案件で使用した技術を関連付ける
+      parameters:
+        - $ref: '#/components/parameters/ProjectId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProjectTechnologyCreateRequest'
+      responses:
+        '201':
+          description: 技術関連付け成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProjectTechnology'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /projects/{projectId}/technologies/{technologyId}:
+    put:
+      tags:
+        - 案件-技術関連付け
+      summary: 案件技術関連付け更新
+      description: 案件で使用した技術の使用期間等を更新
+      parameters:
+        - $ref: '#/components/parameters/ProjectId'
+        - $ref: '#/components/parameters/TechnologyId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProjectTechnologyUpdateRequest'
+      responses:
+        '200':
+          description: 技術関連付け更新成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProjectTechnology'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+    delete:
+      tags:
+        - 案件-技術関連付け
+      summary: 案件技術関連付け削除
+      description: 案件から技術の関連付けを削除
+      parameters:
+        - $ref: '#/components/parameters/ProjectId'
+        - $ref: '#/components/parameters/TechnologyId'
+      responses:
+        '204':
+          description: 技術関連付け削除成功
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  # 統計・レポート
+  /statistics/technologies/rankings:
+    get:
+      tags:
+        - 統計・レポート
+      summary: 技術別経験年数ランキング
+      description: 技術別の累計経験年数をランキング形式で取得
+      parameters:
+        - name: limit
+          in: query
+          description: 取得件数
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+      responses:
+        '200':
+          description: ランキング取得成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TechnologyRankingResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /statistics/technologies/categories:
+    get:
+      tags:
+        - 統計・レポート
+      summary: カテゴリ別技術分布
+      description: カテゴリ別の技術分布統計を取得
+      responses:
+        '200':
+          description: カテゴリ別分布取得成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CategoryDistributionResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /statistics/projects/yearly:
+    get:
+      tags:
+        - 統計・レポート
+      summary: 年別案件数統計
+      description: 年別の案件数統計を取得
+      responses:
+        '200':
+          description: 年別統計取得成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/YearlyProjectStatsResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /statistics/projects/positions:
+    get:
+      tags:
+        - 統計・レポート
+      summary: ポジション別分析
+      description: ポジション別の案件分析データを取得
+      responses:
+        '200':
+          description: ポジション別分析取得成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PositionAnalysisResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  parameters:
+    ProjectId:
+      name: projectId
+      in: path
+      required: true
+      description: 案件ID
+      schema:
+        type: string
+        format: uuid
+
+    TechnologyId:
+      name: technologyId
+      in: path
+      required: true
+      description: 技術ID
+      schema:
+        type: string
+        format: uuid
+
+    SkillId:
+      name: skillId
+      in: path
+      required: true
+      description: スキルID
+      schema:
+        type: string
+        format: uuid
+
+  responses:
+    BadRequest:
+      description: リクエストエラー
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+
+    Unauthorized:
+      description: 認証エラー
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+
+    NotFound:
+      description: リソースが見つからない
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+
+  schemas:
+    # 基本型
+    Error:
+      type: object
+      required:
+        - code
+        - message
+      properties:
+        code:
+          type: string
+          description: エラーコード
+        message:
+          type: string
+          description: エラーメッセージ
+        details:
+          type: array
+          items:
+            type: string
+          description: 詳細エラー情報
+
+    PaginationMeta:
+      type: object
+      required:
+        - page
+        - limit
+        - total
+        - total_pages
+      properties:
+        page:
+          type: integer
+          description: 現在のページ番号
+        limit:
+          type: integer
+          description: 1ページあたりの件数
+        total:
+          type: integer
+          description: 総件数
+        total_pages:
+          type: integer
+          description: 総ページ数
+
+    # 認証関連
+    LoginRequest:
+      type: object
+      required:
+        - email
+        - password
+      properties:
+        email:
+          type: string
+          format: email
+          description: メールアドレス
+        password:
+          type: string
+          minLength: 8
+          description: パスワード
+
+    AuthResponse:
+      type: object
+      required:
+        - access_token
+        - token_type
+        - expires_in
+        - user
+      properties:
+        access_token:
+          type: string
+          description: アクセストークン
+        token_type:
+          type: string
+          enum: [Bearer]
+          description: トークンタイプ
+        expires_in:
+          type: integer
+          description: トークン有効期限（秒）
+        user:
+          $ref: '#/components/schemas/User'
+
+    # ユーザー
+    User:
+      type: object
+      required:
+        - id
+        - name
+        - email
+        - created_at
+        - updated_at
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: ユーザーID
+        name:
+          type: string
+          description: ユーザー名
+        email:
+          type: string
+          format: email
+          description: メールアドレス
+        created_at:
+          type: string
+          format: date-time
+          description: 作成日時
+        updated_at:
+          type: string
+          format: date-time
+          description: 更新日時
+
+    # 案件関連
+    Project:
+      type: object
+      required:
+        - id
+        - user_id
+        - name
+        - start_date
+        - position
+        - created_at
+        - updated_at
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: 案件ID
+        user_id:
+          type: string
+          format: uuid
+          description: ユーザーID
+        name:
+          type: string
+          description: 案件名
+        start_date:
+          type: string
+          format: date
+          description: 開始日
+        end_date:
+          type: string
+          format: date
+          nullable: true
+          description: 終了日
+        position:
+          type: string
+          description: 担当ポジション
+        description:
+          type: string
+          nullable: true
+          description: プロジェクト概要
+        comments:
+          type: string
+          nullable: true
+          description: 感想・コメント
+        created_at:
+          type: string
+          format: date-time
+          description: 作成日時
+        updated_at:
+          type: string
+          format: date-time
+          description: 更新日時
+
+    ProjectDetail:
+      allOf:
+        - $ref: '#/components/schemas/Project'
+        - type: object
+          properties:
+            technologies:
+              type: array
+              items:
+                $ref: '#/components/schemas/ProjectTechnology'
+              description: 関連技術一覧
+
+    ProjectCreateRequest:
+      type: object
+      required:
+        - name
+        - start_date
+        - position
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 255
+          description: 案件名
+        start_date:
+          type: string
+          format: date
+          description: 開始日
+        end_date:
+          type: string
+          format: date
+          nullable: true
+          description: 終了日
+        position:
+          type: string
+          minLength: 1
+          maxLength: 255
+          description: 担当ポジション
+        description:
+          type: string
+          maxLength: 2000
+          nullable: true
+          description: プロジェクト概要
+        comments:
+          type: string
+          maxLength: 2000
+          nullable: true
+          description: 感想・コメント
+
+    ProjectUpdateRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 255
+          description: 案件名
+        start_date:
+          type: string
+          format: date
+          description: 開始日
+        end_date:
+          type: string
+          format: date
+          nullable: true
+          description: 終了日
+        position:
+          type: string
+          minLength: 1
+          maxLength: 255
+          description: 担当ポジション
+        description:
+          type: string
+          maxLength: 2000
+          nullable: true
+          description: プロジェクト概要
+        comments:
+          type: string
+          maxLength: 2000
+          nullable: true
+          description: 感想・コメント
+
+    ProjectListResponse:
+      type: object
+      required:
+        - data
+        - meta
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/Project'
+        meta:
+          $ref: '#/components/schemas/PaginationMeta'
+
+    # 技術関連
+    Technology:
+      type: object
+      required:
+        - id
+        - name
+        - category
+        - created_at
+        - updated_at
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: 技術ID
+        name:
+          type: string
+          description: 技術名
+        category:
+          type: string
+          description: カテゴリ
+        created_at:
+          type: string
+          format: date-time
+          description: 作成日時
+        updated_at:
+          type: string
+          format: date-time
+          description: 更新日時
+
+    TechnologyCreateRequest:
+      type: object
+      required:
+        - name
+        - category
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 255
+          description: 技術名
+        category:
+          type: string
+          minLength: 1
+          maxLength: 100
+          description: カテゴリ
+
+    TechnologyUpdateRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 255
+          description: 技術名
+        category:
+          type: string
+          minLength: 1
+          maxLength: 100
+          description: カテゴリ
+
+    TechnologyListResponse:
+      type: object
+      required:
+        - data
+        - meta
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/Technology'
+        meta:
+          $ref: '#/components/schemas/PaginationMeta'
+
+    # スキル関連
+    Skill:
+      type: object
+      required:
+        - id
+        - user_id
+        - technology_id
+        - skill_level
+        - total_experience_years
+        - created_at
+        - updated_at
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: スキルID
+        user_id:
+          type: string
+          format: uuid
+          description: ユーザーID
+        technology_id:
+          type: string
+          format: uuid
+          description: 技術ID
+        technology:
+          $ref: '#/components/schemas/Technology'
+        skill_level:
+          type: integer
+          minimum: 1
+          maximum: 5
+          description: スキルレベル（1-5）
+        total_experience_years:
+          type: number
+          format: float
+          minimum: 0
+          description: 累計経験年数
+        created_at:
+          type: string
+          format: date-time
+          description: 作成日時
+        updated_at:
+          type: string
+          format: date-time
+          description: 更新日時
+
+    SkillCreateRequest:
+      type: object
+      required:
+        - technology_id
+        - skill_level
+      properties:
+        technology_id:
+          type: string
+          format: uuid
+          description: 技術ID
+        skill_level:
+          type: integer
+          minimum: 1
+          maximum: 5
+          description: スキルレベル（1-5）
+
+    SkillUpdateRequest:
+      type: object
+      properties:
+        skill_level:
+          type: integer
+          minimum: 1
+          maximum: 5
+          description: スキルレベル（1-5）
+
+    SkillListResponse:
+      type: object
+      required:
+        - data
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/Skill'
+
+    # 案件-技術関連付け
+    ProjectTechnology:
+      type: object
+      required:
+        - id
+        - project_id
+        - technology_id
+        - usage_start_date
+        - created_at
+        - updated_at
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: 関連ID
+        project_id:
+          type: string
+          format: uuid
+          description: 案件ID
+        technology_id:
+          type: string
+          format: uuid
+          description: 技術ID
+        technology:
+          $ref: '#/components/schemas/Technology'
+        usage_start_date:
+          type: string
+          format: date
+          description: 使用開始日
+        usage_end_date:
+          type: string
+          format: date
+          nullable: true
+          description: 使用終了日
+        created_at:
+          type: string
+          format: date-time
+          description: 作成日時
+        updated_at:
+          type: string
+          format: date-time
+          description: 更新日時
+
+    ProjectTechnologyCreateRequest:
+      type: object
+      required:
+        - technology_id
+        - usage_start_date
+      properties:
+        technology_id:
+          type: string
+          format: uuid
+          description: 技術ID
+        usage_start_date:
+          type: string
+          format: date
+          description: 使用開始日
+        usage_end_date:
+          type: string
+          format: date
+          nullable: true
+          description: 使用終了日
+
+    ProjectTechnologyUpdateRequest:
+      type: object
+      properties:
+        usage_start_date:
+          type: string
+          format: date
+          description: 使用開始日
+        usage_end_date:
+          type: string
+          format: date
+          nullable: true
+          description: 使用終了日
+
+    ProjectTechnologyListResponse:
+      type: object
+      required:
+        - data
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/ProjectTechnology'
+
+    # 統計・レポート関連
+    TechnologyRanking:
+      type: object
+      required:
+        - technology
+        - total_experience_years
+        - rank
+      properties:
+        technology:
+          $ref: '#/components/schemas/Technology'
+        total_experience_years:
+          type: number
+          format: float
+          description: 累計経験年数
+        rank:
+          type: integer
+          description: ランキング順位
+
+    TechnologyRankingResponse:
+      type: object
+      required:
+        - data
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/TechnologyRanking'
+
+    CategoryDistribution:
+      type: object
+      required:
+        - category
+        - count
+        - total_experience_years
+      properties:
+        category:
+          type: string
+          description: カテゴリ名
+        count:
+          type: integer
+          description: 技術数
+        total_experience_years:
+          type: number
+          format: float
+          description: カテゴリ別累計経験年数
+
+    CategoryDistributionResponse:
+      type: object
+      required:
+        - data
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/CategoryDistribution'
+
+    YearlyProjectStats:
+      type: object
+      required:
+        - year
+        - project_count
+      properties:
+        year:
+          type: integer
+          description: 年
+        project_count:
+          type: integer
+          description: 案件数
+
+    YearlyProjectStatsResponse:
+      type: object
+      required:
+        - data
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/YearlyProjectStats'
+
+    PositionAnalysis:
+      type: object
+      required:
+        - position
+        - project_count
+        - total_duration_months
+      properties:
+        position:
+          type: string
+          description: ポジション名
+        project_count:
+          type: integer
+          description: 案件数
+        total_duration_months:
+          type: number
+          format: float
+          description: 累計期間（月）
+
+    PositionAnalysisResponse:
+      type: object
+      required:
+        - data
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/PositionAnalysis'
