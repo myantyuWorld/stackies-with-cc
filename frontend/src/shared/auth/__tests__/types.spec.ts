@@ -61,11 +61,11 @@ describe('Auth Types', () => {
     it('should have correct login request properties', () => {
       const loginRequest: LoginRequest = {
         code: 'google-auth-code',
-        redirectUri: 'http://localhost:3000/auth/callback'
+        state: 'google-auth-state'
       }
 
       expect(loginRequest.code).toBe('google-auth-code')
-      expect(loginRequest.redirectUri).toBe('http://localhost:3000/auth/callback')
+      expect(loginRequest.state).toBe('google-auth-state')
     })
   })
 
