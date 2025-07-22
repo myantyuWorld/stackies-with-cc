@@ -31,12 +31,12 @@ describe('Auth API Client', () => {
 
       const loginRequest: LoginRequest = {
         code: 'google-auth-code',
-        redirectUri: 'http://localhost:3000/auth/callback'
+        state: 'google-auth-state'
       }
 
       const result = await authClient.login(loginRequest)
 
-      expect(mockFetch).toHaveBeenCalledWith('/api/auth/google/login', {
+      expect(mockFetch).toHaveBeenCalledWith(import.meta.env.VITE_APP_API_BASE_URL + '/auth/google/login', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
@@ -56,7 +56,7 @@ describe('Auth API Client', () => {
 
       const loginRequest: LoginRequest = {
         code: 'invalid-code',
-        redirectUri: 'http://localhost:3000/auth/callback'
+        state: 'google-auth-state'
       }
 
       await expect(authClient.login(loginRequest)).rejects.toThrow('Login failed: 401 Unauthorized')
@@ -82,7 +82,7 @@ describe('Auth API Client', () => {
 
       const result = await authClient.refreshToken(refreshRequest)
 
-      expect(mockFetch).toHaveBeenCalledWith('/api/auth/refresh', {
+      expect(mockFetch).toHaveBeenCalledWith(import.meta.env.VITE_APP_API_BASE_URL + '/auth/refresh', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
@@ -125,7 +125,7 @@ describe('Auth API Client', () => {
 
       const result = await authClient.getUser('access-token')
 
-      expect(mockFetch).toHaveBeenCalledWith('/api/auth/me', {
+      expect(mockFetch).toHaveBeenCalledWith(import.meta.env.VITE_APP_API_BASE_URL + '/auth/me', {
         method: 'GET',
         headers: {
           'Authorization': 'Bearer access-token',
@@ -157,7 +157,7 @@ describe('Auth API Client', () => {
 
       await authClient.logout('access-token')
 
-      expect(mockFetch).toHaveBeenCalledWith('/api/auth/logout', {
+      expect(mockFetch).toHaveBeenCalledWith(import.meta.env.VITE_APP_API_BASE_URL + '/auth/logout', {
         method: 'POST',
         headers: {
           'Authorization': 'Bearer access-token',

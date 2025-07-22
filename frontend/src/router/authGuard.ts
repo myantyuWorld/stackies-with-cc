@@ -7,6 +7,8 @@ export const authGuard = async (
   next: NavigationGuardNext
 ) => {
   const authStore = useAuthStore()
+
+  console.log(authStore)
   
   // 認証状態を初期化（必要に応じて）
   if (!authStore.accessToken) {
