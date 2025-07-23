@@ -73,6 +73,83 @@ paths:
         '401':
           $ref: '#/components/responses/Unauthorized'
 
+  /auth/google:
+    post:
+      tags:
+        - 認証
+      summary: Google OAuth認証
+      description: GoogleアカウントでOAuth認証を行う
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GoogleAuthRequest'
+      responses:
+        '200':
+          description: Google認証成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+        '401':
+          description: 認証失敗
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /auth/mfa/setup:
+    post:
+      tags:
+        - 認証
+      summary: MFA設定
+      description: 多要素認証を設定する
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MFASetupRequest'
+      responses:
+        '200':
+          description: MFA設定成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MFASetupResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /auth/mfa/verify:
+    post:
+      tags:
+        - 認証
+      summary: MFA認証
+      description: 多要素認証を検証する
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MFAVerifyRequest'
+      responses:
+        '200':
+          description: MFA認証成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+        '401':
+          description: 認証失敗
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
   # 案件管理
   /projects:
     get:
@@ -610,6 +687,872 @@ paths:
         '401':
           $ref: '#/components/responses/Unauthorized'
 
+  # プロフィール管理
+  /users/profile:
+    get:
+      tags:
+        - プロフィール管理
+      summary: プロフィール取得
+      description: ユーザーのプロフィール情報を取得
+      responses:
+        '200':
+          description: プロフィール取得成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserProfile'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+    put:
+      tags:
+        - プロフィール管理
+      summary: プロフィール更新
+      description: ユーザーのプロフィール情報を更新
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserProfileUpdateRequest'
+      responses:
+        '200':
+          description: プロフィール更新成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserProfile'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /users/settings:
+    get:
+      tags:
+        - プロフィール管理
+      summary: ユーザー設定取得
+      description: ユーザーの設定情報を取得
+      responses:
+        '200':
+          description: ユーザー設定取得成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserSettings'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+    put:
+      tags:
+        - プロフィール管理
+      summary: ユーザー設定更新
+      description: ユーザーの設定情報を更新
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserSettingsUpdateRequest'
+      responses:
+        '200':
+          description: ユーザー設定更新成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserSettings'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  # 組織管理
+  /organizations:
+    post:
+      tags:
+        - 組織管理
+      summary: 組織作成
+      description: 新しい組織を作成
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OrganizationCreateRequest'
+      responses:
+        '201':
+          description: 組織作成成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Organization'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /organizations/{organizationId}:
+    get:
+      tags:
+        - 組織管理
+      summary: 組織詳細取得
+      description: 組織の詳細情報を取得
+      parameters:
+        - $ref: '#/components/parameters/OrganizationId'
+      responses:
+        '200':
+          description: 組織詳細取得成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OrganizationDetail'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+    put:
+      tags:
+        - 組織管理
+      summary: 組織更新
+      description: 組織情報を更新
+      parameters:
+        - $ref: '#/components/parameters/OrganizationId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OrganizationUpdateRequest'
+      responses:
+        '200':
+          description: 組織更新成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Organization'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+  /organizations/{organizationId}/teams:
+    get:
+      tags:
+        - 組織管理
+      summary: チーム一覧取得
+      description: 組織内のチーム一覧を取得
+      parameters:
+        - $ref: '#/components/parameters/OrganizationId'
+        - name: page
+          in: query
+          description: ページ番号
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+        - name: limit
+          in: query
+          description: 1ページあたりの件数
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+      responses:
+        '200':
+          description: チーム一覧取得成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TeamListResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+    post:
+      tags:
+        - 組織管理
+      summary: チーム作成
+      description: 組織内に新しいチームを作成
+      parameters:
+        - $ref: '#/components/parameters/OrganizationId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TeamCreateRequest'
+      responses:
+        '201':
+          description: チーム作成成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Team'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+  /organizations/{organizationId}/teams/{teamId}:
+    get:
+      tags:
+        - 組織管理
+      summary: チーム詳細取得
+      description: チームの詳細情報を取得
+      parameters:
+        - $ref: '#/components/parameters/OrganizationId'
+        - $ref: '#/components/parameters/TeamId'
+      responses:
+        '200':
+          description: チーム詳細取得成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TeamDetail'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+    put:
+      tags:
+        - 組織管理
+      summary: チーム更新
+      description: チーム情報を更新
+      parameters:
+        - $ref: '#/components/parameters/OrganizationId'
+        - $ref: '#/components/parameters/TeamId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TeamUpdateRequest'
+      responses:
+        '200':
+          description: チーム更新成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Team'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+    delete:
+      tags:
+        - 組織管理
+      summary: チーム削除
+      description: チームを削除
+      parameters:
+        - $ref: '#/components/parameters/OrganizationId'
+        - $ref: '#/components/parameters/TeamId'
+      responses:
+        '204':
+          description: チーム削除成功
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+  # ユーザー招待・管理
+  /organizations/{organizationId}/invitations:
+    post:
+      tags:
+        - ユーザー招待
+      summary: ユーザー招待
+      description: 組織にユーザーを招待
+      parameters:
+        - $ref: '#/components/parameters/OrganizationId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserInvitationRequest'
+      responses:
+        '201':
+          description: 招待送信成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserInvitation'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+    get:
+      tags:
+        - ユーザー招待
+      summary: 招待一覧取得
+      description: 組織の招待一覧を取得
+      parameters:
+        - $ref: '#/components/parameters/OrganizationId'
+        - name: status
+          in: query
+          description: 招待ステータスによるフィルタ
+          schema:
+            type: string
+            enum: [pending, accepted, expired]
+        - name: page
+          in: query
+          description: ページ番号
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+        - name: limit
+          in: query
+          description: 1ページあたりの件数
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+      responses:
+        '200':
+          description: 招待一覧取得成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserInvitationListResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+  /invitations/{invitationId}/accept:
+    post:
+      tags:
+        - ユーザー招待
+      summary: 招待受諾
+      description: 招待を受諾して組織に参加
+      parameters:
+        - $ref: '#/components/parameters/InvitationId'
+      responses:
+        '200':
+          description: 招待受諾成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserInvitation'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  # ユーザー管理
+  /organizations/{organizationId}/users:
+    get:
+      tags:
+        - ユーザー管理
+      summary: 組織ユーザー一覧取得
+      description: 組織内のユーザー一覧を取得
+      parameters:
+        - $ref: '#/components/parameters/OrganizationId'
+        - name: role
+          in: query
+          description: ロールによるフィルタ
+          schema:
+            type: string
+            enum: [admin, team_leader, member]
+        - name: team_id
+          in: query
+          description: チームIDによるフィルタ
+          schema:
+            type: string
+            format: uuid
+        - name: status
+          in: query
+          description: ユーザーステータスによるフィルタ
+          schema:
+            type: string
+            enum: [active, inactive, suspended]
+        - name: search
+          in: query
+          description: 名前・メールアドレスでの検索
+          schema:
+            type: string
+        - name: page
+          in: query
+          description: ページ番号
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+        - name: limit
+          in: query
+          description: 1ページあたりの件数
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+      responses:
+        '200':
+          description: ユーザー一覧取得成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OrganizationUserListResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+  /organizations/{organizationId}/users/{userId}:
+    get:
+      tags:
+        - ユーザー管理
+      summary: 組織ユーザー詳細取得
+      description: 組織内のユーザー詳細情報を取得
+      parameters:
+        - $ref: '#/components/parameters/OrganizationId'
+        - $ref: '#/components/parameters/UserId'
+      responses:
+        '200':
+          description: ユーザー詳細取得成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OrganizationUser'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+    put:
+      tags:
+        - ユーザー管理
+      summary: 組織ユーザー更新
+      description: 組織内のユーザー情報を更新
+      parameters:
+        - $ref: '#/components/parameters/OrganizationId'
+        - $ref: '#/components/parameters/UserId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OrganizationUserUpdateRequest'
+      responses:
+        '200':
+          description: ユーザー更新成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OrganizationUser'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+  /organizations/{organizationId}/users/{userId}/status:
+    put:
+      tags:
+        - ユーザー管理
+      summary: ユーザーステータス変更
+      description: 組織内のユーザーステータスを変更
+      parameters:
+        - $ref: '#/components/parameters/OrganizationId'
+        - $ref: '#/components/parameters/UserId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserStatusUpdateRequest'
+      responses:
+        '200':
+          description: ステータス変更成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OrganizationUser'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+  # チーム統計
+  /organizations/{organizationId}/teams/{teamId}/statistics/portfolio:
+    get:
+      tags:
+        - チーム統計
+      summary: チーム技術ポートフォリオ
+      description: チームの技術ポートフォリオを取得
+      parameters:
+        - $ref: '#/components/parameters/OrganizationId'
+        - $ref: '#/components/parameters/TeamId'
+      responses:
+        '200':
+          description: チーム技術ポートフォリオ取得成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TeamTechPortfolioResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+  /organizations/{organizationId}/teams/{teamId}/statistics/skill-gap:
+    get:
+      tags:
+        - チーム統計
+      summary: チームスキルギャップ分析
+      description: チームメンバー間のスキルギャップを分析
+      parameters:
+        - $ref: '#/components/parameters/OrganizationId'
+        - $ref: '#/components/parameters/TeamId'
+      responses:
+        '200':
+          description: スキルギャップ分析取得成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TeamSkillGapResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+  /organizations/{organizationId}/teams/{teamId}/statistics/skill-matrix:
+    get:
+      tags:
+        - チーム統計
+      summary: チームスキルマトリックス
+      description: チームのスキルマトリックスを取得
+      parameters:
+        - $ref: '#/components/parameters/OrganizationId'
+        - $ref: '#/components/parameters/TeamId'
+      responses:
+        '200':
+          description: スキルマトリックス取得成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TeamSkillMatrixResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+  # 組織統計
+  /organizations/{organizationId}/statistics/competitiveness:
+    get:
+      tags:
+        - 組織統計
+      summary: 組織技術競争力分析
+      description: 組織の技術競争力を分析
+      parameters:
+        - $ref: '#/components/parameters/OrganizationId'
+      responses:
+        '200':
+          description: 技術競争力分析取得成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OrgCompetitivenessResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+  /organizations/{organizationId}/statistics/team-comparison:
+    get:
+      tags:
+        - 組織統計
+      summary: チーム間スキル比較
+      description: 組織内のチーム間でスキルを比較
+      parameters:
+        - $ref: '#/components/parameters/OrganizationId'
+      responses:
+        '200':
+          description: チーム間スキル比較取得成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TeamComparisonResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+  /organizations/{organizationId}/statistics/skill-roadmap:
+    get:
+      tags:
+        - 組織統計
+      summary: 組織スキルロードマップ
+      description: 組織のスキルロードマップを取得
+      parameters:
+        - $ref: '#/components/parameters/OrganizationId'
+      responses:
+        '200':
+          description: スキルロードマップ取得成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OrgSkillRoadmapResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+  # プロジェクトアサイン
+  /organizations/{organizationId}/project-assignments/recommendations:
+    post:
+      tags:
+        - プロジェクトアサイン
+      summary: 最適メンバー推奨
+      description: プロジェクト要件に基づく最適メンバーを推奨
+      parameters:
+        - $ref: '#/components/parameters/OrganizationId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProjectAssignmentRequest'
+      responses:
+        '200':
+          description: メンバー推奨取得成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProjectAssignmentResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+  # 権限管理
+  /organizations/{organizationId}/roles:
+    get:
+      tags:
+        - 権限管理
+      summary: ロール一覧取得
+      description: 組織のロール一覧を取得
+      parameters:
+        - $ref: '#/components/parameters/OrganizationId'
+      responses:
+        '200':
+          description: ロール一覧取得成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RoleListResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+    post:
+      tags:
+        - 権限管理
+      summary: カスタムロール作成
+      description: 組織のカスタムロールを作成
+      parameters:
+        - $ref: '#/components/parameters/OrganizationId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RoleCreateRequest'
+      responses:
+        '201':
+          description: ロール作成成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Role'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+  # 監査ログ
+  /organizations/{organizationId}/audit-logs:
+    get:
+      tags:
+        - 監査ログ
+      summary: 監査ログ一覧取得
+      description: 組織の監査ログ一覧を取得
+      parameters:
+        - $ref: '#/components/parameters/OrganizationId'
+        - name: user_id
+          in: query
+          description: ユーザーIDによるフィルタ
+          schema:
+            type: string
+            format: uuid
+        - name: action
+          in: query
+          description: アクションによるフィルタ
+          schema:
+            type: string
+        - name: start_date
+          in: query
+          description: 開始日によるフィルタ
+          schema:
+            type: string
+            format: date
+        - name: end_date
+          in: query
+          description: 終了日によるフィルタ
+          schema:
+            type: string
+            format: date
+        - name: page
+          in: query
+          description: ページ番号
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+        - name: limit
+          in: query
+          description: 1ページあたりの件数
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+      responses:
+        '200':
+          description: 監査ログ一覧取得成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuditLogListResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+  # システム管理（システム管理者のみ）
+  /admin/system/status:
+    get:
+      tags:
+        - システム管理
+      summary: システムステータス取得
+      description: システムの稼働状況を取得
+      responses:
+        '200':
+          description: システムステータス取得成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SystemStatusResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+  /admin/organizations:
+    get:
+      tags:
+        - システム管理
+      summary: 全組織一覧取得
+      description: システム内の全組織一覧を取得
+      parameters:
+        - name: page
+          in: query
+          description: ページ番号
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+        - name: limit
+          in: query
+          description: 1ページあたりの件数
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+      responses:
+        '200':
+          description: 全組織一覧取得成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminOrganizationListResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
 components:
   securitySchemes:
     bearerAuth:
@@ -645,6 +1588,42 @@ components:
         type: string
         format: uuid
 
+    OrganizationId:
+      name: organizationId
+      in: path
+      required: true
+      description: 組織ID
+      schema:
+        type: string
+        format: uuid
+
+    TeamId:
+      name: teamId
+      in: path
+      required: true
+      description: チームID
+      schema:
+        type: string
+        format: uuid
+
+    UserId:
+      name: userId
+      in: path
+      required: true
+      description: ユーザーID
+      schema:
+        type: string
+        format: uuid
+
+    InvitationId:
+      name: invitationId
+      in: path
+      required: true
+      description: 招待ID
+      schema:
+        type: string
+        format: uuid
+
   responses:
     BadRequest:
       description: リクエストエラー
@@ -662,6 +1641,13 @@ components:
 
     NotFound:
       description: リソースが見つからない
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+
+    Forbidden:
+      description: アクセス権限エラー
       content:
         application/json:
           schema:
@@ -745,6 +1731,56 @@ components:
         user:
           $ref: '#/components/schemas/User'
 
+    GoogleAuthRequest:
+      type: object
+      required:
+        - id_token
+      properties:
+        id_token:
+          type: string
+          description: GoogleのIDトークン
+
+    MFASetupRequest:
+      type: object
+      required:
+        - method
+      properties:
+        method:
+          type: string
+          enum: [totp]
+          description: MFA方式
+
+    MFASetupResponse:
+      type: object
+      required:
+        - secret
+        - qr_code_url
+        - backup_codes
+      properties:
+        secret:
+          type: string
+          description: MFAシークレット
+        qr_code_url:
+          type: string
+          description: QRコードURL
+        backup_codes:
+          type: array
+          items:
+            type: string
+          description: バックアップコード
+
+    MFAVerifyRequest:
+      type: object
+      required:
+        - code
+      properties:
+        code:
+          type: string
+          description: MFA認証コード
+        backup_code:
+          type: string
+          description: バックアップコード（codeの代わりに使用可能）
+
     # ユーザー
     User:
       type: object
@@ -774,6 +1810,161 @@ components:
           type: string
           format: date-time
           description: 更新日時
+
+    # プロフィール関連
+    UserProfile:
+      type: object
+      required:
+        - id
+        - user_id
+        - display_name
+        - created_at
+        - updated_at
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: プロフィールID
+        user_id:
+          type: string
+          format: uuid
+          description: ユーザーID
+        display_name:
+          type: string
+          description: 表示名
+        bio:
+          type: string
+          nullable: true
+          description: 自己紹介
+        avatar_url:
+          type: string
+          nullable: true
+          description: アバター画像URL
+        linkedin_url:
+          type: string
+          nullable: true
+          description: LinkedInプロフィールURL
+        github_url:
+          type: string
+          nullable: true
+          description: GitHubプロフィールURL
+        website_url:
+          type: string
+          nullable: true
+          description: ウェブサイトURL
+        created_at:
+          type: string
+          format: date-time
+          description: 作成日時
+        updated_at:
+          type: string
+          format: date-time
+          description: 更新日時
+
+    UserProfileUpdateRequest:
+      type: object
+      properties:
+        display_name:
+          type: string
+          minLength: 1
+          maxLength: 100
+          description: 表示名
+        bio:
+          type: string
+          maxLength: 500
+          nullable: true
+          description: 自己紹介
+        avatar_url:
+          type: string
+          nullable: true
+          description: アバター画像URL
+        linkedin_url:
+          type: string
+          nullable: true
+          description: LinkedInプロフィールURL
+        github_url:
+          type: string
+          nullable: true
+          description: GitHubプロフィールURL
+        website_url:
+          type: string
+          nullable: true
+          description: ウェブサイトURL
+
+    UserSettings:
+      type: object
+      required:
+        - id
+        - user_id
+        - language
+        - timezone
+        - email_notifications
+        - created_at
+        - updated_at
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: 設定ID
+        user_id:
+          type: string
+          format: uuid
+          description: ユーザーID
+        language:
+          type: string
+          enum: [ja, en]
+          default: ja
+          description: 言語設定
+        timezone:
+          type: string
+          default: Asia/Tokyo
+          description: タイムゾーン
+        email_notifications:
+          type: object
+          properties:
+            project_updates:
+              type: boolean
+              default: true
+              description: 案件更新通知
+            skill_recommendations:
+              type: boolean
+              default: true
+              description: スキル推奨通知
+            team_invitations:
+              type: boolean
+              default: true
+              description: チーム招待通知
+        created_at:
+          type: string
+          format: date-time
+          description: 作成日時
+        updated_at:
+          type: string
+          format: date-time
+          description: 更新日時
+
+    UserSettingsUpdateRequest:
+      type: object
+      properties:
+        language:
+          type: string
+          enum: [ja, en]
+          description: 言語設定
+        timezone:
+          type: string
+          description: タイムゾーン
+        email_notifications:
+          type: object
+          properties:
+            project_updates:
+              type: boolean
+              description: 案件更新通知
+            skill_recommendations:
+              type: boolean
+              description: スキル推奨通知
+            team_invitations:
+              type: boolean
+              description: チーム招待通知
 
     # 案件関連
     Project:
@@ -1266,3 +2457,813 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/PositionAnalysis'
+
+    # 組織関連
+    Organization:
+      type: object
+      required:
+        - id
+        - name
+        - created_at
+        - updated_at
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: 組織ID
+        name:
+          type: string
+          description: 組織名
+        description:
+          type: string
+          nullable: true
+          description: 組織概要
+        website_url:
+          type: string
+          nullable: true
+          description: ウェブサイトURL
+        logo_url:
+          type: string
+          nullable: true
+          description: ロゴ画像URL
+        created_at:
+          type: string
+          format: date-time
+          description: 作成日時
+        updated_at:
+          type: string
+          format: date-time
+          description: 更新日時
+
+    OrganizationDetail:
+      allOf:
+        - $ref: '#/components/schemas/Organization'
+        - type: object
+          properties:
+            teams:
+              type: array
+              items:
+                $ref: '#/components/schemas/Team'
+              description: チーム一覧
+            member_count:
+              type: integer
+              description: メンバー数
+
+    OrganizationCreateRequest:
+      type: object
+      required:
+        - name
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 255
+          description: 組織名
+        description:
+          type: string
+          maxLength: 1000
+          nullable: true
+          description: 組織概要
+        website_url:
+          type: string
+          nullable: true
+          description: ウェブサイトURL
+        logo_url:
+          type: string
+          nullable: true
+          description: ロゴ画像URL
+
+    OrganizationUpdateRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 255
+          description: 組織名
+        description:
+          type: string
+          maxLength: 1000
+          nullable: true
+          description: 組織概要
+        website_url:
+          type: string
+          nullable: true
+          description: ウェブサイトURL
+        logo_url:
+          type: string
+          nullable: true
+          description: ロゴ画像URL
+
+    # チーム関連
+    Team:
+      type: object
+      required:
+        - id
+        - organization_id
+        - name
+        - created_at
+        - updated_at
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: チームID
+        organization_id:
+          type: string
+          format: uuid
+          description: 組織ID
+        name:
+          type: string
+          description: チーム名
+        description:
+          type: string
+          nullable: true
+          description: チーム概要
+        leader_id:
+          type: string
+          format: uuid
+          nullable: true
+          description: チームリーダーID
+        created_at:
+          type: string
+          format: date-time
+          description: 作成日時
+        updated_at:
+          type: string
+          format: date-time
+          description: 更新日時
+
+    TeamDetail:
+      allOf:
+        - $ref: '#/components/schemas/Team'
+        - type: object
+          properties:
+            members:
+              type: array
+              items:
+                $ref: '#/components/schemas/OrganizationUser'
+              description: メンバー一覧
+            leader:
+              $ref: '#/components/schemas/OrganizationUser'
+              nullable: true
+              description: チームリーダー
+
+    TeamCreateRequest:
+      type: object
+      required:
+        - name
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 255
+          description: チーム名
+        description:
+          type: string
+          maxLength: 1000
+          nullable: true
+          description: チーム概要
+        leader_id:
+          type: string
+          format: uuid
+          nullable: true
+          description: チームリーダーID
+
+    TeamUpdateRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 255
+          description: チーム名
+        description:
+          type: string
+          maxLength: 1000
+          nullable: true
+          description: チーム概要
+        leader_id:
+          type: string
+          format: uuid
+          nullable: true
+          description: チームリーダーID
+
+    TeamListResponse:
+      type: object
+      required:
+        - data
+        - meta
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/Team'
+        meta:
+          $ref: '#/components/schemas/PaginationMeta'
+
+    # ユーザー招待関連
+    UserInvitation:
+      type: object
+      required:
+        - id
+        - organization_id
+        - email
+        - role
+        - status
+        - expires_at
+        - created_at
+        - updated_at
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: 招待ID
+        organization_id:
+          type: string
+          format: uuid
+          description: 組織ID
+        email:
+          type: string
+          format: email
+          description: 招待メールアドレス
+        role:
+          type: string
+          enum: [admin, team_leader, member]
+          description: 招待ロール
+        team_id:
+          type: string
+          format: uuid
+          nullable: true
+          description: 招待チームID
+        status:
+          type: string
+          enum: [pending, accepted, expired]
+          description: 招待ステータス
+        invited_by:
+          type: string
+          format: uuid
+          description: 招待者ID
+        expires_at:
+          type: string
+          format: date-time
+          description: 有効期限
+        accepted_at:
+          type: string
+          format: date-time
+          nullable: true
+          description: 受諾日時
+        created_at:
+          type: string
+          format: date-time
+          description: 作成日時
+        updated_at:
+          type: string
+          format: date-time
+          description: 更新日時
+
+    UserInvitationRequest:
+      type: object
+      required:
+        - email
+        - role
+      properties:
+        email:
+          type: string
+          format: email
+          description: 招待メールアドレス
+        role:
+          type: string
+          enum: [admin, team_leader, member]
+          description: 招待ロール
+        team_id:
+          type: string
+          format: uuid
+          nullable: true
+          description: 招待チームID
+        message:
+          type: string
+          maxLength: 500
+          nullable: true
+          description: 招待メッセージ
+
+    UserInvitationListResponse:
+      type: object
+      required:
+        - data
+        - meta
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/UserInvitation'
+        meta:
+          $ref: '#/components/schemas/PaginationMeta'
+
+    # 組織ユーザー関連
+    OrganizationUser:
+      type: object
+      required:
+        - id
+        - organization_id
+        - user_id
+        - role
+        - status
+        - joined_at
+        - created_at
+        - updated_at
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: 組織ユーザーID
+        organization_id:
+          type: string
+          format: uuid
+          description: 組織ID
+        user_id:
+          type: string
+          format: uuid
+          description: ユーザーID
+        user:
+          $ref: '#/components/schemas/User'
+        role:
+          type: string
+          enum: [admin, team_leader, member]
+          description: ロール
+        status:
+          type: string
+          enum: [active, inactive, suspended]
+          description: ステータス
+        team_id:
+          type: string
+          format: uuid
+          nullable: true
+          description: 所属チームID
+        team:
+          $ref: '#/components/schemas/Team'
+          nullable: true
+        joined_at:
+          type: string
+          format: date-time
+          description: 参加日時
+        created_at:
+          type: string
+          format: date-time
+          description: 作成日時
+        updated_at:
+          type: string
+          format: date-time
+          description: 更新日時
+
+    OrganizationUserUpdateRequest:
+      type: object
+      properties:
+        role:
+          type: string
+          enum: [admin, team_leader, member]
+          description: ロール
+        team_id:
+          type: string
+          format: uuid
+          nullable: true
+          description: 所属チームID
+
+    UserStatusUpdateRequest:
+      type: object
+      required:
+        - status
+      properties:
+        status:
+          type: string
+          enum: [active, inactive, suspended]
+          description: ユーザーステータス
+
+    OrganizationUserListResponse:
+      type: object
+      required:
+        - data
+        - meta
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/OrganizationUser'
+        meta:
+          $ref: '#/components/schemas/PaginationMeta'
+
+    # 統計関連（チーム・組織レベル）
+    TeamTechPortfolioResponse:
+      type: object
+      required:
+        - data
+      properties:
+        data:
+          type: object
+          properties:
+            technologies:
+              type: array
+              items:
+                type: object
+                properties:
+                  technology:
+                    $ref: '#/components/schemas/Technology'
+                  member_count:
+                    type: integer
+                    description: 該当技術を持つメンバー数
+                  average_skill_level:
+                    type: number
+                    format: float
+                    description: 平均スキルレベル
+                  total_experience_years:
+                    type: number
+                    format: float
+                    description: チーム合計経験年数
+
+    TeamSkillGapResponse:
+      type: object
+      required:
+        - data
+      properties:
+        data:
+          type: object
+          properties:
+            skill_gaps:
+              type: array
+              items:
+                type: object
+                properties:
+                  technology:
+                    $ref: '#/components/schemas/Technology'
+                  required_level:
+                    type: integer
+                    description: 必要スキルレベル
+                  current_max_level:
+                    type: integer
+                    description: 現在の最高スキルレベル
+                  gap:
+                    type: integer
+                    description: スキルギャップ
+                  member_count:
+                    type: integer
+                    description: 該当技術を持つメンバー数
+
+    TeamSkillMatrixResponse:
+      type: object
+      required:
+        - data
+      properties:
+        data:
+          type: object
+          properties:
+            matrix:
+              type: array
+              items:
+                type: object
+                properties:
+                  member:
+                    $ref: '#/components/schemas/OrganizationUser'
+                  skills:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Skill'
+
+    OrgCompetitivenessResponse:
+      type: object
+      required:
+        - data
+      properties:
+        data:
+          type: object
+          properties:
+            overall_score:
+              type: number
+              format: float
+              description: 総合競争力スコア
+            technology_coverage:
+              type: number
+              format: float
+              description: 技術カバレッジ率
+            skill_diversity:
+              type: number
+              format: float
+              description: スキル多様性指数
+            experience_depth:
+              type: number
+              format: float
+              description: 経験深度指数
+
+    TeamComparisonResponse:
+      type: object
+      required:
+        - data
+      properties:
+        data:
+          type: array
+          items:
+            type: object
+            properties:
+              team:
+                $ref: '#/components/schemas/Team'
+              skill_score:
+                type: number
+                format: float
+                description: スキルスコア
+              technology_count:
+                type: integer
+                description: 習得技術数
+              average_experience:
+                type: number
+                format: float
+                description: 平均経験年数
+
+    OrgSkillRoadmapResponse:
+      type: object
+      required:
+        - data
+      properties:
+        data:
+          type: object
+          properties:
+            current_state:
+              type: object
+              description: 現在のスキル状況
+            target_state:
+              type: object
+              description: 目標スキル状況
+            skill_gaps:
+              type: array
+              items:
+                type: object
+                description: スキルギャップ
+            recommendations:
+              type: array
+              items:
+                type: string
+              description: 推奨アクション
+
+    # プロジェクトアサイン関連
+    ProjectAssignmentRequest:
+      type: object
+      required:
+        - required_technologies
+        - project_duration_months
+      properties:
+        required_technologies:
+          type: array
+          items:
+            type: object
+            properties:
+              technology_id:
+                type: string
+                format: uuid
+              required_skill_level:
+                type: integer
+                minimum: 1
+                maximum: 5
+        project_duration_months:
+          type: integer
+          minimum: 1
+          description: プロジェクト期間（月）
+        team_id:
+          type: string
+          format: uuid
+          nullable: true
+          description: 特定チームからの選択
+        max_members:
+          type: integer
+          minimum: 1
+          default: 5
+          description: 最大メンバー数
+
+    ProjectAssignmentResponse:
+      type: object
+      required:
+        - data
+      properties:
+        data:
+          type: object
+          properties:
+            recommended_members:
+              type: array
+              items:
+                type: object
+                properties:
+                  member:
+                    $ref: '#/components/schemas/OrganizationUser'
+                  match_score:
+                    type: number
+                    format: float
+                    description: マッチングスコア
+                  skill_matches:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        technology:
+                          $ref: '#/components/schemas/Technology'
+                        required_level:
+                          type: integer
+                        current_level:
+                          type: integer
+
+    # 権限管理関連
+    Role:
+      type: object
+      required:
+        - id
+        - organization_id
+        - name
+        - permissions
+        - created_at
+        - updated_at
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: ロールID
+        organization_id:
+          type: string
+          format: uuid
+          description: 組織ID
+        name:
+          type: string
+          description: ロール名
+        description:
+          type: string
+          nullable: true
+          description: ロール説明
+        permissions:
+          type: array
+          items:
+            type: string
+          description: 権限一覧
+        is_system_role:
+          type: boolean
+          description: システムロールかどうか
+        created_at:
+          type: string
+          format: date-time
+          description: 作成日時
+        updated_at:
+          type: string
+          format: date-time
+          description: 更新日時
+
+    RoleCreateRequest:
+      type: object
+      required:
+        - name
+        - permissions
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 100
+          description: ロール名
+        description:
+          type: string
+          maxLength: 500
+          nullable: true
+          description: ロール説明
+        permissions:
+          type: array
+          items:
+            type: string
+          description: 権限一覧
+
+    RoleListResponse:
+      type: object
+      required:
+        - data
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/Role'
+
+    # 監査ログ関連
+    AuditLog:
+      type: object
+      required:
+        - id
+        - organization_id
+        - user_id
+        - action
+        - resource_type
+        - resource_id
+        - ip_address
+        - user_agent
+        - created_at
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: 監査ログID
+        organization_id:
+          type: string
+          format: uuid
+          description: 組織ID
+        user_id:
+          type: string
+          format: uuid
+          description: ユーザーID
+        user:
+          $ref: '#/components/schemas/User'
+        action:
+          type: string
+          description: アクション
+        resource_type:
+          type: string
+          description: リソースタイプ
+        resource_id:
+          type: string
+          description: リソースID
+        details:
+          type: object
+          nullable: true
+          description: 詳細情報
+        ip_address:
+          type: string
+          description: IPアドレス
+        user_agent:
+          type: string
+          description: ユーザーエージェント
+        created_at:
+          type: string
+          format: date-time
+          description: 作成日時
+
+    AuditLogListResponse:
+      type: object
+      required:
+        - data
+        - meta
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/AuditLog'
+        meta:
+          $ref: '#/components/schemas/PaginationMeta'
+
+    # システム管理関連
+    SystemStatusResponse:
+      type: object
+      required:
+        - status
+        - version
+        - uptime
+        - database_status
+        - redis_status
+      properties:
+        status:
+          type: string
+          enum: [healthy, degraded, down]
+          description: システムステータス
+        version:
+          type: string
+          description: システムバージョン
+        uptime:
+          type: integer
+          description: 稼働時間（秒）
+        database_status:
+          type: string
+          enum: [connected, disconnected]
+          description: データベース接続状況
+        redis_status:
+          type: string
+          enum: [connected, disconnected]
+          description: Redis接続状況
+        active_users:
+          type: integer
+          description: アクティブユーザー数
+        total_organizations:
+          type: integer
+          description: 総組織数
+
+    AdminOrganizationListResponse:
+      type: object
+      required:
+        - data
+        - meta
+      properties:
+        data:
+          type: array
+          items:
+            allOf:
+              - $ref: '#/components/schemas/Organization'
+              - type: object
+                properties:
+                  member_count:
+                    type: integer
+                    description: メンバー数
+                  subscription_plan:
+                    type: string
+                    description: サブスクリプションプラン
+                  last_activity:
+                    type: string
+                    format: date-time
+                    description: 最終活動日時
+        meta:
+          $ref: '#/components/schemas/PaginationMeta'
